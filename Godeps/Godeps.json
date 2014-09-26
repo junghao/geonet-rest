@@ -1,0 +1,22 @@
+{
+	"ImportPath": "github.com/GeoNet/geonet-rest",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/daaku/go.httpgzip",
+			"Rev": "3f59977b58c61991f5ed3670bbd141937d808b06"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "4b8fbc56f3b2400a7c7ea3dba9b3539787c486b6"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "fbed41b4c063a307ab21bf37ae6705519fb34ca3"
+		}
+	]
+}
