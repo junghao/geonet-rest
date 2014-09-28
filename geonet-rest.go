@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/GeoNet/geonet-rest/geojsonV1"
+	"github.com/GeoNet/geonet-rest/jsonV1"
 	"github.com/daaku/go.httpgzip"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -58,9 +59,13 @@ func main() {
 	db.SetMaxOpenConns(config.DataBase.MaxOpenConns)
 
 	err = db.Ping()
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// create an http client to share.
+	client := &http.Client{}
 
 	// Create a router and subrouter so that all api requests are like http://server.com/api
 	r := mux.NewRouter()
@@ -71,9 +76,13 @@ func main() {
 	v1 := api.Headers("Accept", geojsonV1.Accept).Subrouter()
 	geojsonV1.Routes(v1, db)
 
+	jv1 := api.Headers("Accept", jsonV1.Accept).Subrouter()
+	jsonV1.RoutesHttp(jv1, client)
+
 	// All requests that haven't exactly matched an earlier router Accept header are sent to this router.
 	// It should route to the latest version of the API.
 	geojsonV1.Routes(api, db)
+	jsonV1.RoutesHttp(api, client)
 
 	http.Handle("/", httpgzip.NewHandler(r))
 	http.ListenAndServe(":"+config.Server.Port, nil)
