@@ -2,6 +2,8 @@
 
 Rest API for GeoNet web site data.
 
+[API Docs](api-docs/README.md)
+
 
 ## Development 
 
