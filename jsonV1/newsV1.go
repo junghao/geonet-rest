@@ -1,9 +1,9 @@
 package jsonV1
 
 import (
-	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"github.com/GeoNet/geonet-rest/pretty"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -78,12 +78,5 @@ func news(w http.ResponseWriter, r *http.Request, client *http.Client) {
 		return
 	}
 
-	var out bytes.Buffer
-	err = json.Indent(&out, []byte(j), "", "   ")
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	out.WriteTo(w)
+	pretty.JSON(w, []byte(j))
 }

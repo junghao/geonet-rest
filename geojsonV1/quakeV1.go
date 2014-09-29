@@ -2,7 +2,7 @@ package geojsonV1
 
 import (
 	"database/sql"
-	"github.com/GeoNet/geonet-rest/util"
+	"github.com/GeoNet/geonet-rest/pretty"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net/http"
@@ -14,7 +14,20 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	var d string
 
-	err := db.QueryRow(
+	// Check that the publicid exists in the DB.
+	rows, err := db.Query("select * FROM qrt.quake_materialized where publicid = $1", p["publicID"])
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		http.Error(w, "invalid publicID "+p["publicID"], 404)
+		return
+	}
+
+	err = db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
                          FROM (SELECT 'Feature' as type,
@@ -40,7 +53,7 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	util.PrettyJSON(w, d)
+	pretty.JSON(w, []byte(d))
 }
 
 // quakes serves GeoJSON of quakes above an intensity in a region.
@@ -89,5 +102,5 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	util.PrettyJSON(w, d)
+	pretty.JSON(w, []byte(d))
 }

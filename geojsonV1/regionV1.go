@@ -2,7 +2,7 @@ package geojsonV1
 
 import (
 	"database/sql"
-	"github.com/GeoNet/geonet-rest/util"
+	"github.com/GeoNet/geonet-rest/pretty"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net/http"
@@ -29,7 +29,7 @@ func quakeRegions(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	util.PrettyJSON(w, d)
+	pretty.JSON(w, []byte(d))
 }
 
 // region serves GeoJSON for a region.
@@ -69,5 +69,5 @@ func region(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	util.PrettyJSON(w, d)
+	pretty.JSON(w, []byte(d))
 }
