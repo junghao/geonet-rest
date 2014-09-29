@@ -98,7 +98,7 @@ var qt = []quakeTest{
 //
 //### Example request:
 //
-// `/quake/2013p407387`
+// [/quake/2013p407387](SERVER/quake/2013p407387)
 //
 func TestQuake(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/quake/2013p407387", nil)
@@ -217,7 +217,7 @@ func TestQuake(t *testing.T) {
 //
 //### Example request:
 //
-// `/quake?regionID=newzealand&intensity=weak&number=30`
+// [/quake?regionID=newzealand&intensity=weak&number=30](SERVER/quake?regionID=newzealand&intensity=weak&number=30)
 //
 func TestQuakes(t *testing.T) {
 	// Test a variety of routes.

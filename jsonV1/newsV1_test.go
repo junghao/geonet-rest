@@ -59,7 +59,7 @@ func TestUnmarshalNews(t *testing.T) {
 //
 //### Example request:
 //
-// `/news/geonet`
+// [/news/geonet](SERVER/news/geonet)
 //
 func TestGeoNetNews(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/news/geonet", nil)

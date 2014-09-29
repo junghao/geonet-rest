@@ -64,6 +64,10 @@ var rt = []regionTest{
 //
 // Get all quake regions.
 //
+//### Example request:
+//
+// [/region?type=quake](SERVER/region?type=quake)
+//
 func TestRegions(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/region?type=quake", nil)
 	res := httptest.NewRecorder()
@@ -105,7 +109,7 @@ func TestRegions(t *testing.T) {
 //
 //### Example request:
 //
-// `/region/wellington`
+// [/region/wellington](SERVER/region/wellington)
 //
 func TestRegion(t *testing.T) {
 	// Test a variety of routes.

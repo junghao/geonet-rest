@@ -10,5 +10,5 @@
 
 ### Example request:
 
- `/news/geonet`
+ [/news/geonet](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/news/geonet)
 

@@ -16,6 +16,10 @@
 
  Get all quake regions.
 
+### Example request:
+
+ [/region?type=quake](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/region?type=quake)
+
 ## Single Region
 
  **GET /region/(regionID)**
@@ -24,5 +28,5 @@
 
 ### Example request:
 
- `/region/wellington`
+ [/region/wellington](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/region/wellington)
 
