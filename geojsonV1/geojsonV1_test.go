@@ -20,7 +20,9 @@ func serve(req *http.Request, res *httptest.ResponseRecorder) {
 		log.Fatal(err)
 	}
 
+	client := &http.Client{}
+
 	r := mux.NewRouter()
-	Routes(r, db)
+	Routes(r, db, client)
 	r.ServeHTTP(res, req)
 }

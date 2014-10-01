@@ -25,6 +25,7 @@ Accept: application/vnd.geo+json; version=1;
 
 * [/quake](endpoints/geojsonV1/quakeV1.md)
 * [/region](endpoints/geojsonV1/regionV1.md)
+* [/felt](endpoints/geojsonV1/feltV1.md)
 
 
 ### Version 1 JSON Endpoints:

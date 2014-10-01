@@ -70,18 +70,18 @@ func main() {
 	// Create a router and subrouter so that all api requests are like http://server.com/api
 	r := mux.NewRouter()
 
-	api := r.PathPrefix("/api/").Methods("GET").Subrouter()
+	api := r.PathPrefix("/").Methods("GET").Subrouter()
 
 	// All requests that have an Accept header that exactly matches geojsonV1.Accept will be sent to this router.
 	v1 := api.Headers("Accept", geojsonV1.Accept).Subrouter()
-	geojsonV1.Routes(v1, db)
+	geojsonV1.Routes(v1, db, client)
 
 	jv1 := api.Headers("Accept", jsonV1.Accept).Subrouter()
 	jsonV1.RoutesHttp(jv1, client)
 
 	// All requests that haven't exactly matched an earlier router Accept header are sent to this router.
 	// It should route to the latest version of the API.
-	geojsonV1.Routes(api, db)
+	geojsonV1.Routes(api, db, client)
 	jsonV1.RoutesHttp(api, client)
 
 	http.Handle("/", httpgzip.NewHandler(r))

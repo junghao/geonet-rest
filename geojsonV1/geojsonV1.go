@@ -19,8 +19,17 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *sql.DB), db *sql.D
 	}
 }
 
+// makeHandler makes a handler that uses an http client.  Also sets http response headers.
+func makeHandlerHttp(fn func(http.ResponseWriter, *http.Request, *http.Client), client *http.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=10")
+		w.Header().Set("Content-Type", Accept)
+		fn(w, r, client)
+	}
+}
+
 // Routes adds handlers to the mux.Router.
-func Routes(r *mux.Router, db *sql.DB) {
+func Routes(r *mux.Router, db *sql.DB, client *http.Client) {
 	// /region/wellington
 	r.HandleFunc("/region/{regionID:[a-z]+}", makeHandler(region, db))
 
@@ -35,4 +44,8 @@ func Routes(r *mux.Router, db *sql.DB) {
 		Queries("regionID", "{regionID:[a-z]+}",
 		"intensity", "{intensity:unnoticeable|weak|light|moderate|strong|severe}",
 		"number", "{number:30|100|500|1000|1500}")
+
+	// /felt/report?publicID=2013p407387
+	r.HandleFunc("/felt/report", makeHandlerHttp(reports, client)).
+		Queries("publicID", "{publicID:[a-z0-9]+}")
 }

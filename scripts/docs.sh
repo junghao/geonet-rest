@@ -2,7 +2,7 @@
 
 mkdir 'api-docs/endpoints/geojsonV1'
 mkdir 'api-docs/endpoints/jsonV1'
-packages=("geojsonV1/quakeV1" "geojsonV1/regionV1" "jsonV1/newsV1")
+packages=("geojsonV1/quakeV1" "geojsonV1/regionV1" "jsonV1/newsV1" "geojsonV1/feltV1")
 
 for package in "${packages[@]}"
 do 
