@@ -111,7 +111,7 @@ func TestQuake(t *testing.T) {
 	}
 
 	if res.HeaderMap.Get("Content-Type") != "application/vnd.geo+json; version=1;" {
-		t.Error("incorrect Content-Type")
+		t.Errorf("incorrect Content-Type")
 	}
 
 	var f QuakeFeatures
@@ -182,21 +182,8 @@ func TestQuake(t *testing.T) {
 
 	serve(req, res)
 
-	if res.Code != 200 {
-		t.Errorf("Non 200 error code: %d", res.Code)
-	}
-
-	if res.HeaderMap.Get("Content-Type") != "application/vnd.geo+json; version=1;" {
-		t.Error("incorrect Content-Type")
-	}
-
-	err = json.Unmarshal([]byte(res.Body.String()), &f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if (len(f.Features)) != 0 {
-		t.Error("Found unxpected features")
+	if res.Code != 404 {
+		t.Errorf("Non 404 error code: %d", res.Code)
 	}
 }
 
