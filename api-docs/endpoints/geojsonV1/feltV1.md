@@ -6,7 +6,7 @@
 
 ## Felt Reports for a Quake.
 
- ** GET /felt/report?publicID=(publicID)
+ **GET /felt/report?publicID=(publicID)**
 
  Get Felt Reports for a quake.
 
