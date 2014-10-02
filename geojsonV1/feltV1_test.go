@@ -40,6 +40,15 @@ func TestReports(t *testing.T) {
 		t.Errorf("incorrect Content-Type")
 	}
 
+	ok, err := validateGeoJSON([]byte(res.Body.String()))
+	if err != nil {
+		t.Error("Problem validating GeoJSON")
+	}
+
+	if !ok {
+		t.Error("Invalid GeoJSON")
+	}
+
 	req, _ = http.NewRequest("GET", "/felt/report?publicID=2013p40738", nil)
 	res = httptest.NewRecorder()
 

@@ -114,8 +114,17 @@ func TestQuake(t *testing.T) {
 		t.Errorf("incorrect Content-Type")
 	}
 
+	ok, err := validateGeoJSON([]byte(res.Body.String()))
+	if err != nil {
+		t.Error("Problem validating GeoJSON")
+	}
+
+	if !ok {
+		t.Error("Invalid GeoJSON")
+	}
+
 	var f QuakeFeatures
-	err := json.Unmarshal([]byte(res.Body.String()), &f)
+	err = json.Unmarshal([]byte(res.Body.String()), &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -233,9 +242,18 @@ func TestQuakes(t *testing.T) {
 		t.Error("incorrect Content-Type")
 	}
 
+	ok, err := validateGeoJSON([]byte(res.Body.String()))
+	if err != nil {
+		t.Error("Problem validating GeoJSON")
+	}
+
+	if !ok {
+		t.Error("Invalid GeoJSON")
+	}
+
 	var f QuakeFeatures
 
-	err := json.Unmarshal([]byte(res.Body.String()), &f)
+	err = json.Unmarshal([]byte(res.Body.String()), &f)
 	if err != nil {
 		log.Fatal(err)
 	}

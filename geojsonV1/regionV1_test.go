@@ -82,9 +82,18 @@ func TestRegions(t *testing.T) {
 		t.Error("incorrect Content-Type")
 	}
 
+	ok, err := validateGeoJSON([]byte(res.Body.String()))
+	if err != nil {
+		t.Error("Problem validating GeoJSON")
+	}
+
+	if !ok {
+		t.Error("Invalid GeoJSON")
+	}
+
 	var f RegionFeatures
 
-	err := json.Unmarshal([]byte(res.Body.String()), &f)
+	err = json.Unmarshal([]byte(res.Body.String()), &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,9 +142,18 @@ func TestRegion(t *testing.T) {
 		t.Errorf("response code: %d", res.Code)
 	}
 
+	ok, err := validateGeoJSON([]byte(res.Body.String()))
+	if err != nil {
+		t.Error("Problem validating GeoJSON")
+	}
+
+	if !ok {
+		t.Error("Invalid GeoJSON")
+	}
+
 	var f RegionFeatures
 
-	err := json.Unmarshal([]byte(res.Body.String()), &f)
+	err = json.Unmarshal([]byte(res.Body.String()), &f)
 	if err != nil {
 		log.Fatal(err)
 	}
