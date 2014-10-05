@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS qrt.quake_materialized CASCADE;
+DROP VIEW IF EXISTS qrt.quake CASCADE;
+DROP VIEW IF EXISTS qrt.quake_unmaterialized CASCADE;
+DROP TABLE IF EXISTS qrt.region CASCADE;
+DROP TABLE IF EXISTS qrt.locality CASCADE;
