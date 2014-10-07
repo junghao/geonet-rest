@@ -1,7 +1,6 @@
 package geojsonV1
 
 import (
-	"github.com/GeoNet/geonet-rest/pretty"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -37,5 +36,5 @@ func reports(w http.ResponseWriter, r *http.Request, client *http.Client) {
 		return
 	}
 
-	pretty.JSON(w, b)
+	w.Write(b)
 }

@@ -2,7 +2,6 @@ package geojsonV1
 
 import (
 	"database/sql"
-	"github.com/GeoNet/geonet-rest/pretty"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net/http"
@@ -53,7 +52,7 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	pretty.JSON(w, []byte(d))
+	w.Write([]byte(d))
 }
 
 // quakes serves GeoJSON of quakes above an intensity in a region.
@@ -102,5 +101,5 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	pretty.JSON(w, []byte(d))
+	w.Write([]byte(d))
 }
