@@ -33,7 +33,6 @@ Run all tests (including those in sub dirs):
 * Use camelCase for query and property names.  Be consistent with SeisComPML or QuakeML e.g., `publicID` not `publicId` or `publicid`.
 * The  http `Accept-Header` should be used to determine which data version and format to return.
 * If there is no `Accept-Header` then route to the latest version of the API. This makes exploring the API with a browser easy.
-* Pretty print the response.  This makes exploring the API with a browser easy.  Due to the gzip compression the extra response size is negligible.
 
 ### API Documentation
 

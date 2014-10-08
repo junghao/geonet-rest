@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
+	"log/syslog"
 	"net/http"
 )
 
@@ -33,6 +34,11 @@ type Server struct {
 // init loads configuration for this application.  It tries /etc/sysconfig/geonet-rest.json first and
 // if that is not found it tries ./geonet-rest.json
 func init() {
+	logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
+	if err == nil {
+		log.SetOutput(logwriter)
+	}
+
 	f, err := ioutil.ReadFile("/etc/sysconfig/geonet-rest.json")
 	if err != nil {
 		f, err = ioutil.ReadFile("./geonet-rest.json")

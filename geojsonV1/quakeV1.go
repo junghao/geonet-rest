@@ -2,9 +2,9 @@ package geojsonV1
 
 import (
 	"database/sql"
-	"github.com/GeoNet/geonet-rest/pretty"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"log"
 	"net/http"
 )
 
@@ -17,6 +17,7 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Check that the publicid exists in the DB.
 	rows, err := db.Query("select * FROM qrt.quake_materialized where publicid = $1", p["publicID"])
 	if err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -53,7 +54,7 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	pretty.JSON(w, []byte(d))
+	w.Write([]byte(d))
 }
 
 // quakes serves GeoJSON of quakes above an intensity in a region.
@@ -64,6 +65,7 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Check that the quake region exists in the DB.
 	rows, err := db.Query("select * FROM qrt.region where regionname = $1 and groupname in ('region', 'north', 'south')", p["regionID"])
 	if err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -98,9 +100,10 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                            ) as l
                          )) as properties FROM qrt.quakeinternal as q where mmi_`+p["regionID"]+` >= qrt.intensity_to_mmi($1) limit $2 ) as f ) as fc`, p["intensity"], p["number"]).Scan(&d)
 	if err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	pretty.JSON(w, []byte(d))
+	w.Write([]byte(d))
 }

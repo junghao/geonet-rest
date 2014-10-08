@@ -3,7 +3,6 @@ package jsonV1
 import (
 	"encoding/json"
 	"encoding/xml"
-	"github.com/GeoNet/geonet-rest/pretty"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -78,5 +77,5 @@ func news(w http.ResponseWriter, r *http.Request, client *http.Client) {
 		return
 	}
 
-	pretty.JSON(w, []byte(j))
+	w.Write([]byte(j))
 }
