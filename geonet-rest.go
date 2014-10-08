@@ -12,6 +12,7 @@ import (
 	"log"
 	"log/syslog"
 	"net/http"
+	"time"
 )
 
 var config Config
@@ -71,7 +72,10 @@ func main() {
 	}
 
 	// create an http client to share.
-	client := &http.Client{}
+	timeout := time.Duration(5 * time.Second)
+	client := &http.Client{
+		Timeout: timeout,
+	}
 
 	// Create a router and subrouter so that all api requests are like http://server.com/api
 	r := mux.NewRouter()
