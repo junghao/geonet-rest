@@ -3,24 +3,27 @@ package geojsonV1
 import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
 const feltURL = "http://felt.geonet.org.nz/services/reports/"
 
-// reports fetches felt reports from the existing web service and pretty prints them.
+// reports fetches felt reports from the existing web service and prints them.
 func reports(w http.ResponseWriter, r *http.Request, client *http.Client) {
 	p := mux.Vars(r)
 
 	res, err := client.Get(feltURL + p["publicID"] + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
