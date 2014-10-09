@@ -466,6 +466,55 @@ in_nz_region is true
 AND status not in ('deleted', 'duplicate') and origintime > current_date - interval '1 year'
 order by originTime desc;
 
+-- This view includs deleted quakes.
+-- The columns that call functions can be added to the materialised view instead if this is 
+-- Better for performance reasons.
+-- If the number of quakes selected is 1500 or less the performance difference (~40ms) is not currently
+-- worth the time it would take to change the materialised view.
+create or replace view qrt.quakeinternal_v2
+AS select
+publicid,
+originTime,
+depth,
+magnitude,
+qrt.quake_quality(status, usedphasecount, magnitudestationcount) as quality,
+status,
+type,
+agency,
+updateTime,
+origin_geom,
+locality,
+maxmmi,
+mmi_newzealand,
+mmi_aucklandnorthland,
+mmi_tongagrirobayofplenty,
+mmi_gisborne,
+mmi_hawkesbay,
+mmi_taranaki,
+mmi_wellington,
+mmi_nelsonwestcoast,
+mmi_canterbury,
+mmi_fiordland,
+mmi_otagosouthland,
+qrt.mmi_to_intensity(maxmmi) as intensity,
+qrt.mmi_to_intensity(mmi_newzealand) as intensity_newzealand,
+qrt.mmi_to_intensity(mmi_aucklandnorthland) as intensity_aucklandnorthland,
+qrt.mmi_to_intensity(mmi_tongagrirobayofplenty) as intensity_tongagrirobayofplenty,
+qrt.mmi_to_intensity(mmi_gisborne) as intensity_gisborne,
+qrt.mmi_to_intensity(mmi_hawkesbay) as intensity_hawkesbay,
+qrt.mmi_to_intensity(mmi_taranaki) as intensity_taranaki,
+qrt.mmi_to_intensity(mmi_wellington) as intensity_wellington,
+qrt.mmi_to_intensity(mmi_nelsonwestcoast) as intensity_nelsonwestcoast,
+qrt.mmi_to_intensity(mmi_canterbury) as intensity_canterbury,
+qrt.mmi_to_intensity(mmi_fiordland) as intensity_fiordland,
+qrt.mmi_to_intensity(mmi_otagosouthland) as intensity_otagosouthland
+FROM qrt.quake_materialized
+WHERE
+in_nz_region is true
+AND status != 'duplicate' 
+AND origintime > current_date - interval '1 year'
+order by originTime desc;
+
 INSERT INTO geometry_columns(f_table_catalog, f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, "type") VALUES ('', 'qrt', 'quakeinternal', 'origin_geom', 2, 4326, 'POINT');
 INSERT INTO qrt.gt_pk_metadata_table(table_schema, table_name, pk_column, pk_column_idx, pk_policy, pk_sequence) VALUES ('qrt', 'quakeinternal', 'publicid', null, null, null);
 
