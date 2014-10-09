@@ -208,17 +208,18 @@ func TestQuake(t *testing.T) {
 // * `regionID` - a valid quake region identifier e.g., `newzealand`.
 // * `intensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
 // * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
-//
+// * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
+
 // *The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
 //
 //### Example request:
 //
-// [/quake?regionID=newzealand&intensity=weak&number=30](SERVER/quake?regionID=newzealand&intensity=weak&number=30)
+// [/quake?regionID=newzealand&intensity=weak&number=30](SERVER/quake?regionID=newzealand&intensity=weak&number=30&quality=best,caution,deleted,good)
 //
 func TestQuakes(t *testing.T) {
 	// Test a variety of routes.
 	for i, qtest := range qt {
-		req, _ := http.NewRequest("GET", "/quake?regionID="+qtest.regionID+"&intensity="+qtest.intensity+"&number="+qtest.number, nil)
+		req, _ := http.NewRequest("GET", "/quake?regionID="+qtest.regionID+"&intensity="+qtest.intensity+"&number="+qtest.number+"&quality=best,caution,good", nil)
 		res := httptest.NewRecorder()
 
 		serve(req, res)
@@ -229,7 +230,7 @@ func TestQuakes(t *testing.T) {
 	}
 
 	// Fetch some features and check we can decode the JSON.
-	req, _ := http.NewRequest("GET", "/quake?regionID=newzealand&intensity=severe&number=30", nil)
+	req, _ := http.NewRequest("GET", "/quake?regionID=newzealand&intensity=severe&number=30&quality=best,caution,good", nil)
 	res := httptest.NewRecorder()
 
 	serve(req, res)
@@ -260,5 +261,32 @@ func TestQuakes(t *testing.T) {
 
 	if len(f.Features) != 2 {
 		t.Error("Found wrong number of features")
+	}
+
+	// Check that deleted quakes are included in the response.
+	// This is a change from the existing GeoNet services.
+
+	req, _ = http.NewRequest("GET", "/quake?regionID=newzealand&intensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
+	res = httptest.NewRecorder()
+
+	serve(req, res)
+
+	if res.Code != 200 {
+		t.Errorf("Non 200 response code: %d", res.Code)
+	}
+
+	err = json.Unmarshal([]byte(res.Body.String()), &f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count = 0
+	for _, q := range f.Features {
+		if q.Properties.Quality == "deleted" {
+			count++
+		}
+	}
+	if count == 0 {
+		t.Error("found no deleted quakes in the JSON.")
 	}
 }

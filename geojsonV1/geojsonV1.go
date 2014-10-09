@@ -43,7 +43,8 @@ func Routes(r *mux.Router, db *sql.DB, client *http.Client) {
 	r.HandleFunc("/quake", makeHandler(quakes, db)).
 		Queries("regionID", "{regionID:[a-z]+}",
 		"intensity", "{intensity:unnoticeable|weak|light|moderate|strong|severe}",
-		"number", "{number:30|100|500|1000|1500}")
+		"number", "{number:30|100|500|1000|1500}",
+		"quality", "{quality:[a-z,]*}")
 
 	// /felt/report?publicID=2013p407387
 	r.HandleFunc("/felt/report", makeHandlerHttp(reports, client)).

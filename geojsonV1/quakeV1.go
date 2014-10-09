@@ -6,7 +6,20 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+	"strings"
 )
+
+var quality map[string]int
+
+func init() {
+	quality = make(map[string]int)
+	quality = map[string]int{
+		"best":    1,
+		"caution": 1,
+		"deleted": 1,
+		"good":    1,
+	}
+}
 
 // quake serves GeoJSON for a specific publicID.
 func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -62,6 +75,14 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	p := mux.Vars(r)
 
+	// check that the quality query is for valid options.
+	qual := strings.Split(p["quality"], ",")
+	for _, q := range qual {
+		if _, ok := quality[q]; !ok {
+			http.Error(w, "Invalid quality: "+q, 500)
+		}
+	}
+
 	// Check that the quake region exists in the DB.
 	rows, err := db.Query("select * FROM qrt.region where regionname = $1 and groupname in ('region', 'north', 'south')", p["regionID"])
 	if err != nil {
@@ -93,12 +114,13 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                                 type, 
                                 agency, 
                                 locality,
-                                qrt.mmi_to_intensity(maxmmi) as intensity,
-                                qrt.mmi_to_intensity(mmi_`+p["regionID"]+`) as "regionIntensity",
-                                qrt.quake_quality(status, usedphasecount, magnitudestationcount) as quality,
+                                intensity,
+                                intensity_`+p["regionID"]+` as "regionIntensity",
+                                quality,
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quakeinternal as q where mmi_`+p["regionID"]+` >= qrt.intensity_to_mmi($1) limit $2 ) as f ) as fc`, p["intensity"], p["number"]).Scan(&d)
+                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+p["regionID"]+` >= qrt.intensity_to_mmi($1) 
+                         AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, p["intensity"], p["number"]).Scan(&d)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, err.Error(), 500)
