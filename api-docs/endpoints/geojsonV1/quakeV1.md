@@ -37,7 +37,7 @@
 
 ## Quakes in a Region
 
- **GET /quake?regionID=(region)&intensity=(intensity)&number=(n)**
+ **GET /quake?regionID=(region)&intensity=(intensity)&number=(n)&quality=(quality)**
 
  Get quake information from the last 365 days.
  If no quakes are found for the query parameters then a null features array is returned.
@@ -48,7 +48,8 @@
  * `intensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
  * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
  * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
- *The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
+
+ The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
 
 ### Example request:
 
