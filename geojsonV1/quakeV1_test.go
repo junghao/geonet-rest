@@ -210,7 +210,7 @@ func TestQuake(t *testing.T) {
 // * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
 // * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
 //
-// The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
+// *The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
 //
 //### Example request:
 //
