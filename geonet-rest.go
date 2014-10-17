@@ -79,6 +79,8 @@ func main() {
 
 	// Create a router and subrouter so that all api requests are like http://server.com/api
 	r := mux.NewRouter()
+	// TODO - custom 404 handler.
+	// r.NotFoundHandler = blah
 
 	api := r.PathPrefix("/").Methods("GET").Subrouter()
 
@@ -95,5 +97,5 @@ func main() {
 	jsonV1.RoutesHttp(api, client)
 
 	http.Handle("/", httpgzip.NewHandler(r))
-	http.ListenAndServe(":"+config.Server.Port, nil)
+	log.Fatal(http.ListenAndServe(":"+config.Server.Port, nil))
 }

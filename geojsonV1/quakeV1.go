@@ -79,7 +79,7 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	qual := strings.Split(p["quality"], ",")
 	for _, q := range qual {
 		if _, ok := quality[q]; !ok {
-			http.Error(w, "Invalid quality: "+q, 500)
+			http.Error(w, "Invalid quality: "+q, 404)
 		}
 	}
 
