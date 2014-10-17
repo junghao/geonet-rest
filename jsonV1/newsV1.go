@@ -12,12 +12,6 @@ import (
 const mlink = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
 const newsURL = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
 
-// var newsV1 = expvar.NewMap("newsV1")
-
-func init() {
-	// expvar.Publish("calls", numCalls)
-}
-
 // Feed is used for unmarshaling XML (from the GeoNet RSS news feed)
 // and marshaling JSON
 type Feed struct {
