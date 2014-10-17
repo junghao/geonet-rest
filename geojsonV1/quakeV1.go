@@ -2,9 +2,9 @@ package geojsonV1
 
 import (
 	"database/sql"
+	"github.com/GeoNet/geonet-rest/web"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -30,14 +30,13 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Check that the publicid exists in the DB.
 	rows, err := db.Query("select * FROM qrt.quake_materialized where publicid = $1", p["publicID"])
 	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		http.Error(w, "invalid publicID "+p["publicID"], 404)
+		web.Nope(w, r, "invalid publicID "+p["publicID"])
 		return
 	}
 
@@ -63,11 +62,11 @@ func quake(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                            ) as l
                          )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, p["publicID"]).Scan(&d)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	w.Write([]byte(d))
+	web.Win(w, r, []byte(d))
 }
 
 // quakes serves GeoJSON of quakes above an intensity in a region.
@@ -79,21 +78,20 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	qual := strings.Split(p["quality"], ",")
 	for _, q := range qual {
 		if _, ok := quality[q]; !ok {
-			http.Error(w, "Invalid quality: "+q, 404)
+			web.Nope(w, r, "Invalid quality: "+q)
 		}
 	}
 
 	// Check that the quake region exists in the DB.
 	rows, err := db.Query("select * FROM qrt.region where regionname = $1 and groupname in ('region', 'north', 'south')", p["regionID"])
 	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		http.Error(w, "invalid region: "+p["regionID"], 404)
+		web.Nope(w, r, "invalid region: "+p["regionID"])
 		return
 	}
 
@@ -122,10 +120,9 @@ func quakes(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                          )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+p["regionID"]+` >= qrt.intensity_to_mmi($1) 
                          AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, p["intensity"], p["number"]).Scan(&d)
 	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	w.Write([]byte(d))
+	web.Win(w, r, []byte(d))
 }
