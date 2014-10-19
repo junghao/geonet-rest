@@ -1,9 +1,10 @@
 package geojsonV1
 
 import (
+	"errors"
+	"github.com/GeoNet/geonet-rest/web"
 	"github.com/gorilla/mux"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -16,28 +17,28 @@ func reports(w http.ResponseWriter, r *http.Request, client *http.Client) {
 	res, err := client.Get(feltURL + p["publicID"] + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	// Errors for non 200 response.  Felt returns a 400 when it should probably be a 404.
-	// Tapestry quirk?
-	if res.StatusCode != 200 {
-		if res.StatusCode == 400 {
-			http.Error(w, string(b), 404)
-		} else {
-			http.Error(w, string(b), res.StatusCode)
-		}
+	// Felt returns a 400 when it should probably be a 404.  Tapestry quirk?
+	switch {
+	case 200 == res.StatusCode:
+		web.Win(w, r, b)
+		return
+	case 4 == res.StatusCode/100:
+		web.Nope(w, r, string(b))
+		return
+	case 5 == res.StatusCode/500:
+		web.Fail(w, r, errors.New("error proxying felt resports.  Shrug."))
 		return
 	}
 
-	w.Write(b)
+	web.Fail(w, r, errors.New("unknown response from felt."))
 }

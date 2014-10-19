@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/GeoNet/geonet-rest/geojsonV1"
 	"github.com/GeoNet/geonet-rest/jsonV1"
+	"github.com/GeoNet/geonet-rest/web"
 	"github.com/daaku/go.httpgzip"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -79,8 +80,7 @@ func main() {
 
 	// Create a router and subrouter so that all api requests are like http://server.com/api
 	r := mux.NewRouter()
-	// TODO - custom 404 handler.
-	// r.NotFoundHandler = blah
+	r.NotFoundHandler = http.HandlerFunc(notFound)
 
 	api := r.PathPrefix("/").Methods("GET").Subrouter()
 
@@ -98,4 +98,9 @@ func main() {
 
 	http.Handle("/", httpgzip.NewHandler(r))
 	log.Fatal(http.ListenAndServe(":"+config.Server.Port, nil))
+}
+
+func notFound(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "max-age=10")
+	web.Nope(w, r, "service not found.")
 }

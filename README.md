@@ -74,3 +74,27 @@ Properties are read from `/etc/sysconfig/geonet-rest.json` and if this is not fo
 ### Properties 
 
 Copy an appropriately edited version of `geonet-rest.json` to `/etc/sysconfig/geonet-rest.json`  This should include read only credentials for accessing the hazard database.
+
+### Monitoring
+
+Expvar is used to expose counters at http://.../debug/vars.  As well as the Go memstats counters there are counters for resquests and responses e.g.,
+
+```
+{
+  "responses": {
+    "5xx": 0,
+    "4xx": 1,
+    "2xx": 5001
+  },
+  "requests": 5002,
+  "memstats": {
+    "BySize": [
+      {
+        "Frees": 0,
+        "Mallocs": 0,
+        "Size": 0
+      },
+...
+```
+
+Fatal application errors, 4xx and 5xx requests are syslogged.

@@ -3,6 +3,7 @@ package jsonV1
 import (
 	"encoding/json"
 	"encoding/xml"
+	"github.com/GeoNet/geonet-rest/web"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -55,27 +56,27 @@ func news(w http.ResponseWriter, r *http.Request, client *http.Client) {
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
 	e, err := unmarshalNews(b)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
 	j, err := json.Marshal(e)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	w.Write([]byte(j))
+	web.Win(w, r, j)
 }

@@ -2,6 +2,7 @@ package geojsonV1
 
 import (
 	"database/sql"
+	"github.com/GeoNet/geonet-rest/web"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net/http"
@@ -24,11 +25,11 @@ func quakeRegions(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                            ) as l
                          )) as properties FROM qrt.region as q where groupname in ('region', 'north', 'south')) as f ) as fc`).Scan(&d)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	w.Write([]byte(d))
+	web.Win(w, r, []byte(d))
 }
 
 // region serves GeoJSON for a region.
@@ -39,13 +40,13 @@ func region(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Check that the region exists in the DB.
 	rows, err := db.Query("select * FROM qrt.region where regionname = $1", p["regionID"])
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		http.Error(w, "invalid region: "+p["regionID"], 404)
+		web.Nope(w, r, "invalid region: "+p["regionID"])
 		return
 	}
 
@@ -64,9 +65,9 @@ func region(w http.ResponseWriter, r *http.Request, db *sql.DB) {
                            ) as l
                          )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, p["regionID"]).Scan(&d)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		web.Fail(w, r, err)
 		return
 	}
 
-	w.Write([]byte(d))
+	web.Win(w, r, []byte(d))
 }
