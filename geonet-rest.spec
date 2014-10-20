@@ -1,3 +1,19 @@
+# Disable the stupid stuff rpm distros include in the build process by default:
+#   Disable any prep shell actions. replace them with simply 'true'
+%define __spec_prep_post true
+%define __spec_prep_pre true
+#   Disable any build shell actions. replace them with simply 'true'
+%define __spec_build_post true
+%define __spec_build_pre true
+#   Disable any install shell actions. replace them with simply 'true'
+%define __spec_install_post true
+%define __spec_install_pre true
+#   Disable any clean shell actions. replace them with simply 'true'
+%define __spec_clean_post true
+%define __spec_clean_pre true
+# Disable checking for unpackaged files ?
+#%undefine __check_files
+
 %define debug_package   %{nil}
 
 %if 0%{!?rev:1}
@@ -29,24 +45,20 @@ The data provided here is used for the GeoNet web site and other similar service
 If you are looking for data for research or other purposes then please check the full [range of data available](http://info.geonet.org.nz/x/DYAO) from GeoNet.  
 
 %prep
-%setup -c -n geonet-rest
 # noop
 
 %build
-unset GOPATH
-export GOPATH=$(pwd)
-godep go build
+# noop
 
 %install
-install -d %{buildroot}%{_bindir}
-install -m 755 geonet-rest %{buildroot}%{_bindir}/geonet-rest
+# noop
 
-install -d %{buildroot}%{_sysconfdir}/sysconfig
-install -m 0644 geonet-rest.json %{buildroot}%{_sysconfdir}/sysconfig/geonet-rest.json
+%clean
+# noop
 
 %files
 %defattr(-,root,root,-)
-%doc README.md
+%doc README.md api-docs
 %config(noreplace) %{_sysconfdir}/sysconfig/geonet-rest.json
 %attr(755,root,root) %{_bindir}/geonet-rest
 
