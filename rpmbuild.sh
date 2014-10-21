@@ -13,6 +13,7 @@ sourcedir=$(pwd)
 buildroot="${topdir}/BUILD"
 
 install -D -m 0755 geonet-rest ${buildroot}/usr/bin/geonet-rest
+install -D -m 0755 geonet-rest.init ${buildroot}/etc/rc.d/init.d/geonet-rest
 install -D -m 0644 geonet-rest.json ${buildroot}/etc/sysconfig/geonet-rest.json
 
 cp -a README.md api-docs ${buildroot}
