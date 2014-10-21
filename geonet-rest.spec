@@ -26,10 +26,10 @@
 %define gh_tar          %{gh_user}-%{gh_name}-%{shortrev}
 %define import_path     github.com/%{gh_user}/%{gh_name}
 
-Name:		geonet-rest
-Version:	0.1
-Release:	%{?rel}git%{shortrev}%{?dist}
-Summary:	Rest API for GeoNet web site data.
+Name:       geonet-rest
+Version:    0.1
+Release:    %{?rel}git%{shortrev}%{?dist}
+Summary:    Rest API for GeoNet web site data.
 
 Group:		Applications/Webapps
 License:	GNS
@@ -56,11 +56,38 @@ If you are looking for data for research or other purposes then please check the
 %clean
 # noop
 
+
+%pre
+getent group alert >/dev/null || groupadd -g 3506 alert
+getent passwd alert >/dev/null || useradd -d /home/alert -u 3506 -g alert alert
+
+
+%post
+/sbin/chkconfig --add geonet-rest
+
+
+%preun
+# Checks that this is the actual deinstallation of the package, as opposed
+# to just removing the old package on upgrade.
+if [ $1 = 0 ] ; then
+    /sbin/service geonet-rest stop >/dev/null 2>&1
+    /sbin/chkconfig --del geonet-rest
+fi
+
+
+%postun
+# Checks that this is an upgrade of the package.
+if [ $1 -ge 1 ] ; then
+    /sbin/service geonet-rest condrestart >/dev/null 2>&1 || :
+fi
+
+
 %files
 %defattr(-,root,root,-)
 %doc README.md api-docs
 %config(noreplace) %{_sysconfdir}/sysconfig/geonet-rest.json
 %attr(755,root,root) %{_bindir}/geonet-rest
+%attr(755,root,root) %{_initrddir}/geonet-rest
 
 
 %changelog
