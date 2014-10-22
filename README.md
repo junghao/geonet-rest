@@ -19,7 +19,7 @@ separately unless you are updating them.
 
 Run:
 
-```godep go run geonet-rest.go```
+```godep go build && ./geonet-rest```
 
 Run all tests (including those in sub dirs):
 
@@ -56,7 +56,7 @@ Run all tests (including those in sub dirs):
 * Update the documentation.  
 * Make the changes.  
 * Update the routes.  
-* Make sure that if no `Accept-Header` is present requests route to the latest version of the API.
+* Make sure that if no `Accept` header is present requests route to the latest version of the API.
 
 
 ### Database
