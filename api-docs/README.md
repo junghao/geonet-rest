@@ -1,3 +1,4 @@
+
 # GeoNet REST API
 
 Welcome to the GeoNet REST api.
@@ -23,9 +24,9 @@ To use version 1 of the GeoJSON endpoints specify the Accept header exactly as b
 Accept: application/vnd.geo+json; version=1;
 ```
 
-* [/quake](endpoints/geojsonV1/quakeV1.md)
-* [/region](endpoints/geojsonV1/regionV1.md)
-* [/felt](endpoints/geojsonV1/feltV1.md)
+* [/quake](endpoints/quakeV1.md)
+* [/region](endpoints/regionV1.md)
+* [/felt](endpoints/feltV1.md)
 
 
 ### Version 1 JSON Endpoints:
@@ -36,5 +37,5 @@ To use version 1 of the JSON endpoints specify the Accept header exactly as belo
 Accept: application/json; version=1;
 ```
 
-* [/news](endpoints/jsonV1/newsV1.md)
+* [/news](endpoints/newsV1.md)
 
