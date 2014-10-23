@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"strings"
 )
@@ -10,21 +11,17 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
 	publicID := r.URL.Path[len("/quake/"):]
-
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty
 	// JSON for an invalid publicID.
-	// TODO - cache the lookups in a map?
-	rows, err := db.Query("select * FROM qrt.quake_materialized where publicid = $1", publicID)
-	if err != nil {
-		fail(w, r, err)
+	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
+	if err == sql.ErrNoRows {
+		nope(w, r, "invalid publicID: "+publicID)
 		return
 	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		nope(w, r, "invalid publicID "+publicID)
+	if err != nil {
+		fail(w, r, err)
 		return
 	}
 

@@ -82,7 +82,7 @@ func init() {
 // main connects to the database, sets up request routing, and starts the http server.
 func main() {
 	var err error
-	db, err = sql.Open("postgres", "user="+config.DataBase.User+" password="+config.DataBase.Password+" dbname=hazard sslmode=disable")
+	db, err = sql.Open("postgres", "connect_timeout=1 user="+config.DataBase.User+" password="+config.DataBase.Password+" dbname=hazard sslmode=disable")
 	if err != nil {
 		log.Println("Problem with DB config.")
 		log.Fatal(err)
@@ -297,6 +297,7 @@ func initLookups() {
 		log.Println("Problem loading quake region query lookups.")
 		log.Fatal(err)
 	}
+	rows.Close()
 
 	// all regions (quake and volcano)
 	allRegion = make(map[string]int)
@@ -321,6 +322,7 @@ func initLookups() {
 		log.Println("Problem loading region query lookups.")
 		log.Fatal(err)
 	}
+	rows.Close()
 }
 
 // win (200) - writes the content in b to the client.

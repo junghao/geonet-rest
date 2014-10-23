@@ -2,8 +2,8 @@
 	"DataBase": {
 		"User": "hazard_r",
 		"Password": "test",
-		"MaxOpenConns": 10, 
-		"MaxIdleConns": 5
+		"MaxOpenConns": 30, 
+		"MaxIdleConns": 20
 	},
 	"Server": {
 		"Port": "8080"
