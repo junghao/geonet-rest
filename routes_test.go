@@ -83,6 +83,11 @@ var rt = []routeTest{
 	{"67", "/news/geonet", "*/*", v1JSON, 200},
 	{"68", "/news/geonet", v1JSON, v1JSON, 200},
 	{"69", "/news/geonet", "bad accept", errContent, 404},
+	{"70", "/", "", errContent, 404},
+	{"71", "/", "*/*", errContent, 404},
+	{"72", "/", v1GeoJSON, errContent, 404},
+	{"73", "/", v1JSON, errContent, 404},
+	{"74", "/bob", "", errContent, 404},
 }
 
 func TestRoutes(t *testing.T) {

@@ -114,6 +114,7 @@ func main() {
 // handler creates a mux and wraps it with default handlers.  Seperate function to enable testing.
 func handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", notFound)
 	mux.HandleFunc("/quake/", quakeRoutes)
 	mux.HandleFunc("/quake", quakesRoutes)
 	mux.HandleFunc("/region/", regionRoutes)
@@ -123,10 +124,11 @@ func handler() http.Handler {
 	return get(httpgzip.NewHandler(mux))
 }
 
-// func notFound(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Cache-Control", "max-age=10")
-// 	web.Nope(w, r, "service not found.")
-// }
+func notFound(w http.ResponseWriter, r *http.Request) {
+	// TODO - how long to cache errors for?
+	w.Header().Set("Cache-Control", "max-age=10")
+	nope(w, r, "service not found.")
+}
 
 // get creates an http handler that only responds to http GET requests.  All other methods are an error.
 //
@@ -143,9 +145,6 @@ func get(h http.Handler) http.Handler {
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 	})
 }
-
-// TODO - in these routes do we need to looks for extra stuff in the URL?
-// Yes and handle errors like this http://stackoverflow.com/questions/9996767/showing-custom-404-error-page-with-standard-http-package
 
 // quakeRoutes handles requests  for single quakes e.g., /quake/2013p12345
 // requests with an empty or wild card Accept header ("" or "*/*") are routed to
