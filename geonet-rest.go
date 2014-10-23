@@ -53,19 +53,23 @@ type Server struct {
 func init() {
 	logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
 	if err == nil {
+		log.Println("** logging to syslog **")
 		log.SetOutput(logwriter)
 	}
 
 	f, err := ioutil.ReadFile("/etc/sysconfig/geonet-rest.json")
 	if err != nil {
+		log.Println("Could not load /etc/sysconfig/geonet-rest.json falling back to local file.")
 		f, err = ioutil.ReadFile("./geonet-rest.json")
 		if err != nil {
+			log.Println("Problem loading ./geonet-rest.json - can't find any config.")
 			log.Fatal(err)
 		}
 	}
 
 	err = json.Unmarshal(f, &config)
 	if err != nil {
+		log.Println("Problem parsing config file.")
 		log.Fatal(err)
 	}
 
@@ -80,6 +84,7 @@ func main() {
 	var err error
 	db, err = sql.Open("postgres", "user="+config.DataBase.User+" password="+config.DataBase.Password+" dbname=hazard sslmode=disable")
 	if err != nil {
+		log.Println("Problem with DB config.")
 		log.Fatal(err)
 	}
 	defer db.Close()
@@ -90,6 +95,7 @@ func main() {
 	err = db.Ping()
 
 	if err != nil {
+		log.Println("Problem pinging DB - is it up and contactable.")
 		log.Fatal(err)
 	}
 
