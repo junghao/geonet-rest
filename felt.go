@@ -6,8 +6,6 @@ import (
 	"net/http"
 )
 
-const feltURL = "http://felt.geonet.org.nz/services/reports/"
-
 // reports fetches felt reports from the existing web service and prints them.
 func reportsV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
