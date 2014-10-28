@@ -20,14 +20,13 @@
 // * `regionIntensity` - the calculated intensity at the closest locality in the region for the request.  If no region is specified for the query then this is the intensity in the `newzealand` region.
 // * `quality` - the quality of this information; `best`, `good`, `caution`, `unknown`, `deleted`.
 // * `modificationTime` - the modification time of this information.
-//
-package geojsonV1
+package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -51,41 +50,6 @@ type QuakeProperties struct {
 	Depth, Magnitude                               float64
 }
 
-type quakeTest struct {
-	regionID, intensity, number string
-	response                    int
-}
-
-var qt = []quakeTest{
-	{"newzealand", "unnoticeable", "30", 200},
-	{"newzealand", "weak", "30", 200},
-	{"newzealand", "light", "30", 200},
-	{"newzealand", "moderate", "30", 200},
-	{"newzealand", "strong", "30", 200},
-	{"newzealand", "severe", "30", 200},
-	{"newzealand", "weak", "100", 200},
-	{"newzealand", "weak", "500", 200},
-	{"newzealand", "weak", "1000", 200},
-	{"newzealand", "weak", "1500", 200},
-	{"newzealand", "weak", "999", 404},
-	{"newzealand", "bad", "30", 404},
-	{"newzealand", "unnoticeable", "30", 200},
-	{"aucklandnorthland", "unnoticeable", "30", 200},
-	{"tongagrirobayofplenty", "unnoticeable", "30", 200},
-	{"gisborne", "unnoticeable", "30", 200},
-	{"hawkesbay", "unnoticeable", "30", 200},
-	{"taranaki", "unnoticeable", "30", 200},
-	{"wellington", "unnoticeable", "30", 200},
-	{"nelsonwestcoast", "unnoticeable", "30", 200},
-	{"canterbury", "unnoticeable", "30", 200},
-	{"fiordland", "unnoticeable", "30", 200},
-	{"otagosouthland", "unnoticeable", "30", 200},
-	{"ruapehu", "unnoticeable", "30", 404},
-	{"bad", "unnoticeable", "30", 404},
-	{"bad", "bad", "30", 404},
-	{"bad", "bad", "999", 404},
-}
-
 //## Single Quake
 //
 //  **GET /quake/(publicID)**
@@ -100,31 +64,27 @@ var qt = []quakeTest{
 //
 // [/quake/2013p407387](SERVER/quake/2013p407387)
 //
-func TestQuake(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/quake/2013p407387", nil)
-	res := httptest.NewRecorder()
+func TestQuakeV1(t *testing.T) {
+	setup()
+	defer teardown()
 
-	serve(req, res)
+	req, _ := http.NewRequest("GET", ts.URL+"/quake/2013p407387", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ := client.Do(req)
+	defer res.Body.Close()
 
-	if res.Code != 200 {
-		t.Errorf("Non 200 error code: %d", res.Code)
+	b, _ := ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
 	}
 
-	if res.HeaderMap.Get("Content-Type") != "application/vnd.geo+json; version=1;" {
+	if res.Header.Get("Content-Type") != v1GeoJSON {
 		t.Errorf("incorrect Content-Type")
 	}
 
-	ok, err := validateGeoJSON([]byte(res.Body.String()))
-	if err != nil {
-		t.Error("Problem validating GeoJSON")
-	}
-
-	if !ok {
-		t.Error("Invalid GeoJSON")
-	}
-
 	var f QuakeFeatures
-	err = json.Unmarshal([]byte(res.Body.String()), &f)
+	err := json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -184,16 +144,6 @@ func TestQuake(t *testing.T) {
 	if f.Features[0].Properties.Magnitude != 4.0252561 {
 		t.Error("incorrect magnitude")
 	}
-
-	// Test an invalid quakeID.
-	req, _ = http.NewRequest("GET", "/quake/2011a443", nil)
-	res = httptest.NewRecorder()
-
-	serve(req, res)
-
-	if res.Code != 404 {
-		t.Errorf("Non 404 error code: %d", res.Code)
-	}
 }
 
 //## Quakes in a Region
@@ -216,66 +166,50 @@ func TestQuake(t *testing.T) {
 //
 // [/quake?regionID=newzealand&intensity=weak&number=30](SERVER/quake?regionID=newzealand&intensity=weak&number=30&quality=best,caution,deleted,good)
 //
-func TestQuakes(t *testing.T) {
-	// Test a variety of routes.
-	for i, qtest := range qt {
-		req, _ := http.NewRequest("GET", "/quake?regionID="+qtest.regionID+"&intensity="+qtest.intensity+"&number="+qtest.number+"&quality=best,caution,good", nil)
-		res := httptest.NewRecorder()
+func TestQuakesV1(t *testing.T) {
+	setup()
+	defer teardown()
 
-		serve(req, res)
+	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&intensity=severe&number=30&quality=best,caution,good", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ := client.Do(req)
+	defer res.Body.Close()
 
-		if res.Code != qtest.response {
-			t.Errorf("Wrong response code for test %d: %d", i, res.Code)
-		}
+	b, _ := ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
 	}
 
-	// Fetch some features and check we can decode the JSON.
-	req, _ := http.NewRequest("GET", "/quake?regionID=newzealand&intensity=severe&number=30&quality=best,caution,good", nil)
-	res := httptest.NewRecorder()
-
-	serve(req, res)
-
-	if res.Code != 200 {
-		t.Errorf("Non 200 response code: %d", res.Code)
-	}
-
-	if res.HeaderMap.Get("Content-Type") != "application/vnd.geo+json; version=1;" {
-		t.Error("incorrect Content-Type")
-	}
-
-	ok, err := validateGeoJSON([]byte(res.Body.String()))
-	if err != nil {
-		t.Error("Problem validating GeoJSON")
-	}
-
-	if !ok {
-		t.Error("Invalid GeoJSON")
+	if res.Header.Get("Content-Type") != v1GeoJSON {
+		t.Errorf("incorrect Content-Type")
 	}
 
 	var f QuakeFeatures
 
-	err = json.Unmarshal([]byte(res.Body.String()), &f)
+	err := json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if len(f.Features) != 2 {
-		t.Error("Found wrong number of features")
+		t.Errorf("Found wrong number of features: %d", len(f.Features))
 	}
 
 	// Check that deleted quakes are included in the response.
 	// This is a change from the existing GeoNet services.
+	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&intensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ = client.Do(req)
+	defer res.Body.Close()
 
-	req, _ = http.NewRequest("GET", "/quake?regionID=newzealand&intensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
-	res = httptest.NewRecorder()
+	b, _ = ioutil.ReadAll(res.Body)
 
-	serve(req, res)
-
-	if res.Code != 200 {
-		t.Errorf("Non 200 response code: %d", res.Code)
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
 	}
 
-	err = json.Unmarshal([]byte(res.Body.String()), &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}

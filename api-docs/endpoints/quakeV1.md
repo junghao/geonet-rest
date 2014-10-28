@@ -20,7 +20,6 @@
  * `regionIntensity` - the calculated intensity at the closest locality in the region for the request.  If no region is specified for the query then this is the intensity in the `newzealand` region.
  * `quality` - the quality of this information; `best`, `good`, `caution`, `unknown`, `deleted`.
  * `modificationTime` - the modification time of this information.
-
 ## Single Quake
 
   **GET /quake/(publicID)**

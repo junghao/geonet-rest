@@ -2,20 +2,18 @@
 //
 //## /news
 //
-package jsonV1
+package main
 
 import (
 	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 )
 
 func TestUnmarshalNews(t *testing.T) {
-	xmlFile, err := os.Open("geonet-news.xml")
+	xmlFile, err := os.Open("etc/test/files/geonet-news.xml")
 	if err != nil {
-		t.Error("problem opening geonet-news.xml")
+		t.Error("problem opening etc/test/files/geonet-news.xml")
 	}
 	defer xmlFile.Close()
 
@@ -61,13 +59,6 @@ func TestUnmarshalNews(t *testing.T) {
 //
 // [/news/geonet](SERVER/news/geonet)
 //
-func TestGeoNetNews(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/news/geonet", nil)
-	res := httptest.NewRecorder()
-
-	serve(req, res)
-
-	if res.Code != 200 {
-		t.Errorf("Non 200 error code: %d", res.Code)
-	}
+func TestGeoNetNewsV1(t *testing.T) {
+	// tested in routes.  This is a handle for the docs.
 }

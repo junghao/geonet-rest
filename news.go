@@ -1,16 +1,12 @@
-package jsonV1
+package main
 
 import (
 	"encoding/json"
 	"encoding/xml"
-	"github.com/GeoNet/geonet-rest/web"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
-
-const mlink = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
-const newsURL = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
 
 // Feed is used for unmarshaling XML (from the GeoNet RSS news feed)
 // and marshaling JSON
@@ -52,31 +48,33 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 }
 
 // news fetches the GeoNet News RSS feed and converts it to simple JSON.
-func news(w http.ResponseWriter, r *http.Request, client *http.Client) {
+func newsV1(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", v1JSON)
+
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
-		web.Fail(w, r, err)
+		fail(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		web.Fail(w, r, err)
+		fail(w, r, err)
 		return
 	}
 
 	e, err := unmarshalNews(b)
 	if err != nil {
-		web.Fail(w, r, err)
+		fail(w, r, err)
 		return
 	}
 
 	j, err := json.Marshal(e)
 	if err != nil {
-		web.Fail(w, r, err)
+		fail(w, r, err)
 		return
 	}
 
-	web.Win(w, r, j)
+	win(w, r, j)
 }
