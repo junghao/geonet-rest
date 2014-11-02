@@ -324,8 +324,7 @@ func ok(w http.ResponseWriter, r *http.Request, b []byte) {
 
 // notFound (404) - whatever the client was looking for we haven't got it.  The message should try
 // to explain why we couldn't find that thing that they was looking for.
-// cache is the cache control string for the client.
-// surrogate is the cache control string for the surrogate (e.g., Varnish)
+// Use for things that might become available e.g., a quake publicID we don't have at the moment.
 func notFound(w http.ResponseWriter, r *http.Request, message string) {
 	log.Println(r.RequestURI + " 404")
 	res.Add("4xx", 1)
@@ -335,7 +334,7 @@ func notFound(w http.ResponseWriter, r *http.Request, message string) {
 }
 
 // notAcceptable (406) - the client requested content we don't know how to
-// generate. The message should suggest conntent types that can be created.
+// generate. The message should suggest content types that can be created.
 func notAcceptable(w http.ResponseWriter, r *http.Request, message string) {
 	log.Println(r.RequestURI + " 406")
 	res.Add("4xx", 1)
@@ -346,6 +345,7 @@ func notAcceptable(w http.ResponseWriter, r *http.Request, message string) {
 
 // badRequest (400) the client made a badRequest request that should not be repeated without correcting it.
 // the message should explain what is badRequest about the request.
+// Use for things that will never become available.
 func badRequest(w http.ResponseWriter, r *http.Request, message string) {
 	log.Println(r.RequestURI + " 400")
 	res.Add("4xx", 1)
