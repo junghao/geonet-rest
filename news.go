@@ -51,30 +51,41 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 func newsV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1JSON)
 
+	// will only be geonet at the moment.
+	newsID := r.URL.Path[len("/news/geonet"):]
+
+	// check there isn't extra stuff in the URL - like a cache buster
+	if len(r.URL.Query()) > 0 || strings.Contains(newsID, "/") {
+		badRequest(w, r, "detected extra stuff in the URL.")
+		return
+	}
+
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
 	e, err := unmarshalNews(b)
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
 	j, err := json.Marshal(e)
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
-	win(w, r, j)
+	w.Header().Set("Surrogate-Control", cacheMedium)
+
+	ok(w, r, j)
 }

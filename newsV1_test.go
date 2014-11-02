@@ -57,7 +57,7 @@ func TestUnmarshalNews(t *testing.T) {
 //
 //### Example request:
 //
-// [/news/geonet](SERVER/news/geonet)
+// `/news/geonet`
 //
 func TestGeoNetNewsV1(t *testing.T) {
 	// tested in routes.  This is a handle for the docs.

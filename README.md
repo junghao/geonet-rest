@@ -32,7 +32,6 @@ Run all tests (including those in sub dirs):
 * Use http methods in routes (`GET`, `PUT` etc).
 * Use camelCase for query and property names.  Be consistent with SeisComPML or QuakeML e.g., `publicID` not `publicId` or `publicid`.
 * The  http `Accept-Header` should be used to determine which data version and format to return.
-* If there is no `Accept-Header` then route to the latest version of the API. This makes exploring the API with a browser easy.
 
 ### API Documentation
 
@@ -51,12 +50,11 @@ Run all tests (including those in sub dirs):
 
 * Are you really sure you have to.  Discuss widely.
 * Copy the current API verion code to the next API version (so as to support all queries at the new version)
-* Monotonically increment the `Accept` constant e.g., `application/vnd.geo+json; version=1 -> application/vnd.geo+json; version=2`
+* Monotonically increment the `Accept` constant e.g., `application/vnd.geo+json;version=1 -> application/vnd.geo+json;version=2`
 * Change the tests.  
 * Update the documentation.  
 * Make the changes.  
-* Update the routes.  
-* Make sure that if no `Accept` header is present requests route to the latest version of the API.
+* Update the routes.  * Make sure that if no `Accept` header is present requests route to the latest version of the API.
 
 
 ### Database

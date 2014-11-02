@@ -62,7 +62,7 @@ type QuakeProperties struct {
 //
 //### Example request:
 //
-// [/quake/2013p407387](SERVER/quake/2013p407387)
+// `/quake/2013p407387`
 //
 func TestQuakeV1(t *testing.T) {
 	setup()
@@ -164,7 +164,7 @@ func TestQuakeV1(t *testing.T) {
 //
 //### Example request:
 //
-// [/quake?regionID=newzealand&intensity=weak&number=30](SERVER/quake?regionID=newzealand&intensity=weak&number=30&quality=best,caution,deleted,good)
+// `/quake?regionID=newzealand&intensity=weak&number=30`
 //
 func TestQuakesV1(t *testing.T) {
 	setup()

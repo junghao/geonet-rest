@@ -22,7 +22,7 @@ import (
 //
 //### Example request:
 //
-// [/felt/report?publicID=2013p407387](SERVER/felt/report?publicID=2013p407387)
+// `/felt/report?publicID=2013p407387`
 //
 func TestReportsV1(t *testing.T) {
 	// tests are done in routes and geojson test.  This is just a handle for the docs.
