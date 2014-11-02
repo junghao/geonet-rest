@@ -197,7 +197,7 @@ func (rt routeTest) test(t *testing.T) {
 		}
 
 		if res.Header.Get("Surrogate-Control") != rt.surrogate {
-			t.Errorf("incorrect Surrogate-Control for test %s: %s", r.id, res.Header.Get("Cache-Control"))
+			t.Errorf("incorrect Surrogate-Control for test %s: %s", r.id, res.Header.Get("Surrogate-Control"))
 		}
 
 		if !strings.Contains("Accept", res.Header.Get("Vary")) {
