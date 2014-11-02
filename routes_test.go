@@ -82,7 +82,7 @@ var routes = []routeTest{
 		v1GeoJSON, errContent, cacheShort, cacheLong, http.StatusBadRequest,
 		[]route{
 			{loc(), "/quake?regionID=newzealand&intensity=bad&number=30&quality=best,caution,good"},
-			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable&number=1500&quality=best,caution,good&busta=true"},
+			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,bad"},
 			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable&number=999&quality=best,caution,good"},
 			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable&quality=best,caution,good"},
 			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable"},
@@ -164,10 +164,8 @@ func TestRoutesBadAccept(t *testing.T) {
 		[]route{{"", ""}}}
 
 	for _, rt := range routes {
-		for _, r := range rt.routes {
-			b.routes[0] = route{r.id, r.url}
-			b.test(t)
-		}
+		b.routes = rt.routes
+		b.test(t)
 	}
 }
 
