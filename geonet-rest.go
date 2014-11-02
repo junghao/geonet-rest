@@ -151,7 +151,7 @@ func get(h http.Handler) http.Handler {
 		if r.Method == "GET" {
 			w.Header().Set("Cache-Control", cacheShort)
 			w.Header().Set("Surrogate-Control", cacheShort)
-			w.Header().Set("Vary", "Accept")
+			w.Header().Add("Vary", "Accept")
 			h.ServeHTTP(w, r)
 			return
 		}
