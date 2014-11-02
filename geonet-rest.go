@@ -53,14 +53,18 @@ type Server struct {
 
 // init loads configuration for this application.  It tries /etc/sysconfig/geonet-rest.json first and
 // if that is not found it tries ./geonet-rest.json
+// If the config is succesfully loaded from /etc/sysconfig/geonet-rest.json then the logging
+// switches to syslogging.
 func init() {
-	logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
+	f, err := ioutil.ReadFile("/etc/sysconfig/geonet-rest.json")
 	if err == nil {
-		log.Println("** logging to syslog **")
-		log.SetOutput(logwriter)
+		logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
+		if err != nil {
+			log.Println("** logging to syslog **")
+			log.SetOutput(logwriter)
+		}
 	}
 
-	f, err := ioutil.ReadFile("/etc/sysconfig/geonet-rest.json")
 	if err != nil {
 		log.Println("Could not load /etc/sysconfig/geonet-rest.json falling back to local file.")
 		f, err = ioutil.ReadFile("./geonet-rest.json")
