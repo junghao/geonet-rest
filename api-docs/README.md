@@ -10,7 +10,7 @@ The data provided here is used for the GeoNet web site and other similar service
 
 The current version is `version=1`.
 
-All end points use a monotonically increasing version number.  You may specify the version of the API you require using the Accept header.  If you do not specify a version in the header then the highest version of the API is assumed for your request. 
+All end points use a monotonically increasing version number.  You may specify the version of the API you require using the Accept header.  
 
 There are two classes of endpoint; those returning GeoJSON and those returning plain JSON.  Use the correct MIME type (along with the version number) in your Accept header depending on which class of endpoint you are calling.  See the examples below.
 
