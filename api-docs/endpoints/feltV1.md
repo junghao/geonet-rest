@@ -16,5 +16,5 @@
 
 ### Example request:
 
- [/felt/report?publicID=2013p407387](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/felt/report?publicID=2013p407387)
+ `/felt/report?publicID=2013p407387`
 

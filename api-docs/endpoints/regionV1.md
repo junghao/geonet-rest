@@ -18,7 +18,7 @@
 
 ### Example request:
 
- [/region?type=quake](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/region?type=quake)
+ `/region?type=quake`
 
 ## Single Region
 
@@ -28,5 +28,5 @@
 
 ### Example request:
 
- [/region/wellington](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/region/wellington)
+ `/region/wellington`
 

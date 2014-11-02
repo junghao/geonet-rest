@@ -45,7 +45,7 @@ type RegionProperties struct {
 //
 //### Example request:
 //
-// [/region?type=quake](SERVER/region?type=quake)
+// `/region?type=quake`
 //
 func TestRegionsV1(t *testing.T) {
 	setup()
@@ -93,7 +93,7 @@ func TestRegionsV1(t *testing.T) {
 //
 //### Example request:
 //
-// [/region/wellington](SERVER/region/wellington)
+// `/region/wellington`
 //
 func TestRegionV1(t *testing.T) {
 	setup()

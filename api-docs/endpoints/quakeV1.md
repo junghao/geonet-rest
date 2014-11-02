@@ -32,7 +32,7 @@
 
 ### Example request:
 
- [/quake/2013p407387](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/quake/2013p407387)
+ `/quake/2013p407387`
 
 ## Quakes in a Region
 
@@ -52,5 +52,5 @@
 
 ### Example request:
 
- [/quake?regionID=newzealand&intensity=weak&number=30](http://ec2-54-253-219-100.ap-southeast-2.compute.amazonaws.com:8080/quake?regionID=newzealand&intensity=weak&number=30&quality=best,caution,deleted,good)
+ `/quake?regionID=newzealand&intensity=weak&number=30`
 

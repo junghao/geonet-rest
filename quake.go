@@ -11,17 +11,24 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
 	publicID := r.URL.Path[len("/quake/"):]
+
+	// check there isn't extra stuff in the URL - like a cache buster query or extra URL parts
+	if len(r.URL.Query()) > 0 || strings.Contains(publicID, "/") {
+		badRequest(w, r, "detected extra stuff in the URL.")
+		return
+	}
+
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty
 	// JSON for an invalid publicID.
 	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
 	if err == sql.ErrNoRows {
-		nope(w, r, "invalid publicID: "+publicID)
+		notFound(w, r, "invalid publicID: "+publicID)
 		return
 	}
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
@@ -47,11 +54,11 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
                            ) as l
                          )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, publicID).Scan(&d)
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
-	win(w, r, []byte(d))
+	ok(w, r, []byte(d))
 }
 
 // quakesV1 serves GeoJSON of quakes above an intensity in a region.
@@ -59,26 +66,32 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 func quakesV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
+	// check we got the correct number of query params.  This rules out cache busters
+	if len(r.URL.Query()) != 4 {
+		badRequest(w, r, "detected extra stuff in the URL.")
+		return
+	}
+
 	//  check the number query is for valid options
 	if _, ok := number[r.URL.Query().Get("number")]; !ok {
-		nope(w, r, "Invalid number: "+r.URL.Query().Get("number"))
+		badRequest(w, r, "Invalid number: "+r.URL.Query().Get("number"))
 	}
 
 	// check the intensity query is for valid options.
 	if _, ok := intensity[r.URL.Query().Get("intensity")]; !ok {
-		nope(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
+		badRequest(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
 	}
 
-	// check the regionID query is for valid.
+	// check the regionID query is valid.
 	if _, ok := quakeRegion[r.URL.Query().Get("regionID")]; !ok {
-		nope(w, r, "Invalid regionID: "+r.URL.Query().Get("regionID"))
+		badRequest(w, r, "Invalid regionID: "+r.URL.Query().Get("regionID"))
 	}
 
 	// check that the quality query is for valid options.
 	qual := strings.Split(r.URL.Query().Get("quality"), ",")
 	for _, q := range qual {
 		if _, ok := quality[q]; !ok {
-			nope(w, r, "Invalid quality: "+q)
+			badRequest(w, r, "Invalid quality: "+q)
 		}
 	}
 
@@ -107,9 +120,9 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
                          )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+r.URL.Query().Get("regionID")+` >= qrt.intensity_to_mmi($1)
                          AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, r.URL.Query().Get("intensity"), r.URL.Query().Get("number")).Scan(&d)
 	if err != nil {
-		fail(w, r, err)
+		serviceUnavailable(w, r, err)
 		return
 	}
 
-	win(w, r, []byte(d))
+	ok(w, r, []byte(d))
 }
