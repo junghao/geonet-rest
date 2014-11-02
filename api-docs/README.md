@@ -21,7 +21,7 @@ These end points all return [GeoJSON](http://geojson.org/).
 To use version 1 of the GeoJSON endpoints specify the Accept header exactly as below. 
 
 ```
-Accept: application/vnd.geo+json; version=1
+Accept: application/vnd.geo+json;version=1
 ```
 
 * [/quake](endpoints/quakeV1.md)
@@ -34,7 +34,7 @@ Accept: application/vnd.geo+json; version=1
 To use version 1 of the JSON endpoints specify the Accept header exactly as below. 
 
 ```
-Accept: application/json; version=1
+Accept: application/json;version=1
 ```
 
 * [/news](endpoints/newsV1.md)

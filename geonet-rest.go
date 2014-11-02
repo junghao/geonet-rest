@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	v1GeoJSON   = "application/vnd.geo+json; version=1"
-	v1JSON      = "application/json; version=1"
+	v1GeoJSON   = "application/vnd.geo+json;version=1"
+	v1JSON      = "application/json;version=1"
 	mlink       = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
 	newsURL     = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
 	feltURL     = "http://felt.geonet.org.nz/services/reports/"

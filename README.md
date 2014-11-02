@@ -50,7 +50,7 @@ Run all tests (including those in sub dirs):
 
 * Are you really sure you have to.  Discuss widely.
 * Copy the current API verion code to the next API version (so as to support all queries at the new version)
-* Monotonically increment the `Accept` constant e.g., `application/vnd.geo+json; version=1 -> application/vnd.geo+json; version=2`
+* Monotonically increment the `Accept` constant e.g., `application/vnd.geo+json;version=1 -> application/vnd.geo+json;version=2`
 * Change the tests.  
 * Update the documentation.  
 * Make the changes.  
