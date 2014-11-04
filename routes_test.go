@@ -70,6 +70,7 @@ var routes = []routeTest{
 		v1GeoJSON, errContent, cacheShort, cacheShort, http.StatusNotFound, // 404s that may become available
 		[]route{
 			{loc(), "/quake/2013p407399"},
+			{loc(), "/felt/report?publicID=2013p407399"},
 		},
 	},
 	{
@@ -93,6 +94,7 @@ var routes = []routeTest{
 			{loc(), "/region/bad"},
 			{loc(), "/region?type=badQuery"},
 			{loc(), "/"},
+			{loc(), "/felt/report?quakeID=2012p498491"},
 		},
 	},
 }
