@@ -61,8 +61,73 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, []byte(d))
 }
 
-// quakesV1 serves GeoJSON of quakes above an intensity in a region.
-// Returns 404 if the regionID is not for a valid quake region.
+// quakesRegionV1 serves GeoJSON of quakes thay may have been felt above an intensity in a region.
+// The quakes could be outside the region.
+func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", v1GeoJSON)
+
+	// check we got the correct number of query params.  This rules out cache busters
+	if len(r.URL.Query()) != 4 {
+		badRequest(w, r, "detected extra stuff in the URL.")
+		return
+	}
+
+	//  check the number query is for valid options
+	if _, ok := number[r.URL.Query().Get("number")]; !ok {
+		badRequest(w, r, "Invalid number: "+r.URL.Query().Get("number"))
+	}
+
+	// check the intensity query is for valid options.
+	if _, ok := intensity[r.URL.Query().Get("regionIntensity")]; !ok {
+		badRequest(w, r, "Invalid regionIntensity: "+r.URL.Query().Get("regionIntensity"))
+	}
+
+	// check the regionID query is valid.
+	if _, ok := quakeRegion[r.URL.Query().Get("regionID")]; !ok {
+		badRequest(w, r, "Invalid regionID: "+r.URL.Query().Get("regionID"))
+	}
+
+	// check that the quality query is for valid options.
+	qual := strings.Split(r.URL.Query().Get("quality"), ",")
+	for _, q := range qual {
+		if _, ok := quality[q]; !ok {
+			badRequest(w, r, "Invalid quality: "+q)
+		}
+	}
+
+	var d string
+
+	err := db.QueryRow(
+		`SELECT row_to_json(fc)
+                         FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
+                         FROM (SELECT 'Feature' as type,
+                         ST_AsGeoJSON(q.origin_geom)::json as geometry,
+                         row_to_json((SELECT l FROM
+                         	(
+                         		SELECT
+                         		publicid AS "publicID",
+                                to_char(origintime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
+                                depth,
+                                magnitude,
+                                type,
+                                agency,
+                                locality,
+                                intensity,
+                                intensity_`+r.URL.Query().Get("regionID")+` as "regionIntensity",
+                                quality,
+                                to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
+                           ) as l
+                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+r.URL.Query().Get("regionID")+` >= qrt.intensity_to_mmi($1)
+                         AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, r.URL.Query().Get("regionIntensity"), r.URL.Query().Get("number")).Scan(&d)
+	if err != nil {
+		serviceUnavailable(w, r, err)
+		return
+	}
+
+	ok(w, r, []byte(d))
+}
+
+// quakesV1 serves GeoJSON of quakes that occured in a region filtered by intensity.
 func quakesV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
@@ -117,8 +182,8 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
                                 quality,
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+r.URL.Query().Get("regionID")+` >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, r.URL.Query().Get("intensity"), r.URL.Query().Get("number")).Scan(&d)
+                         )) as properties FROM qrt.quakeinternal_v2 as q where maxmmi >= qrt.intensity_to_mmi($1)
+                         AND quality in ('`+strings.Join(qual, `','`)+`')  AND ST_Contains((select geom from qrt.region where regionname = $3), ST_Shift_Longitude(origin_geom)) limit $2 ) as f ) as fc`, r.URL.Query().Get("intensity"), r.URL.Query().Get("number"), r.URL.Query().Get("regionID")).Scan(&d)
 	if err != nil {
 		serviceUnavailable(w, r, err)
 		return

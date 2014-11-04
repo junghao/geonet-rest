@@ -146,9 +146,9 @@ func TestQuakeV1(t *testing.T) {
 	}
 }
 
-//## Quakes in a Region
+//## Quakes Possibly Felt in a Region
 //
-// **GET /quake?regionID=(region)&intensity=(intensity)&number=(n)&quality=(quality)**
+// **GET /quake?regionID=(region)&regionIntensity=(intensity)&number=(n)&quality=(quality)**
 //
 // Get quake information from the last 365 days.
 // If no quakes are found for the query parameters then a null features array is returned.
@@ -156,7 +156,7 @@ func TestQuakeV1(t *testing.T) {
 //### Parameters
 //
 // * `regionID` - a valid quake region identifier e.g., `newzealand`.
-// * `intensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
+// * `regionIntensity` - the minimum intensity in the region e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
 // * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
 // * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
 //
@@ -164,13 +164,13 @@ func TestQuakeV1(t *testing.T) {
 //
 //### Example request:
 //
-// `/quake?regionID=newzealand&intensity=weak&number=30`
+// `/quake?regionID=newzealand&regionIntensity=weak&number=30`
 //
-func TestQuakesV1(t *testing.T) {
+func TestQuakesRegionV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&intensity=severe&number=30&quality=best,caution,good", nil)
+	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&regionIntensity=severe&number=30&quality=best,caution,good", nil)
 	req.Header.Add("Accept", v1GeoJSON)
 	res, _ := client.Do(req)
 	defer res.Body.Close()
@@ -198,7 +198,7 @@ func TestQuakesV1(t *testing.T) {
 
 	// Check that deleted quakes are included in the response.
 	// This is a change from the existing GeoNet services.
-	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&intensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
+	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&regionIntensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
 	req.Header.Add("Accept", v1GeoJSON)
 	res, _ = client.Do(req)
 	defer res.Body.Close()
@@ -222,5 +222,107 @@ func TestQuakesV1(t *testing.T) {
 	}
 	if count == 0 {
 		t.Error("found no deleted quakes in the JSON.")
+	}
+}
+
+//## Quakes in a Region
+//
+// **GET /quake?regionID=(region)&intensity=(intensity)&number=(n)&quality=(quality)**
+//
+// Get quake information from the last 365 days.
+// If no quakes are found for the query parameters then a null features array is returned.
+//
+//### Parameters
+//
+// * `regionID` - a valid quake region identifier e.g., `newzealand`.
+// * `intensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
+// * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
+// * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
+//
+// *The `number` of quakes that can be returned is restricted to a range of options to improve caching.*
+//
+//### Example request:
+//
+// `/quake?regionID=newzealand&intensity=weak&number=30`
+//
+func TestQuakesV1(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// There should be 2 quakes that are felt in the Wellington region and no quakes that occur in the Wellington region.
+	// This tests the difference between regionIntensity and intensity
+	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=wellington&intensity=weak&number=30&quality=best,caution,good", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ := client.Do(req)
+	defer res.Body.Close()
+
+	b, _ := ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	}
+
+	if res.Header.Get("Content-Type") != v1GeoJSON {
+		t.Errorf("incorrect Content-Type")
+	}
+
+	var f QuakeFeatures
+
+	err := json.Unmarshal(b, &f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(f.Features) != 0 {
+		t.Errorf("Found wrong number of features: %d", len(f.Features))
+	}
+
+	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=wellington&regionIntensity=weak&number=30&quality=best,caution,good", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ = client.Do(req)
+	defer res.Body.Close()
+
+	b, _ = ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	}
+
+	if res.Header.Get("Content-Type") != v1GeoJSON {
+		t.Errorf("incorrect Content-Type")
+	}
+
+	err = json.Unmarshal(b, &f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(f.Features) != 2 {
+		t.Errorf("Found wrong number of features: %d", len(f.Features))
+	}
+
+	// There should be 7 quakes weak and above in the Canterbury region.
+	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=canterbury&intensity=weak&number=30&quality=best,caution,good", nil)
+	req.Header.Add("Accept", v1GeoJSON)
+	res, _ = client.Do(req)
+	defer res.Body.Close()
+
+	b, _ = ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	}
+
+	if res.Header.Get("Content-Type") != v1GeoJSON {
+		t.Errorf("incorrect Content-Type")
+	}
+
+	err = json.Unmarshal(b, &f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(f.Features) != 7 {
+		t.Errorf("Found wrong number of features: %d", len(f.Features))
 	}
 }
