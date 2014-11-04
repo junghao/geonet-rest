@@ -13,7 +13,7 @@ var routesGeoJSON = []routeTest{
 		v1GeoJSON, v1GeoJSON, cacheShort, cacheShort, http.StatusOK,
 		[]route{
 			{loc(), "/quake/2013p407387"},
-			{loc(), "/quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good"},
+			{loc(), "/quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good"},
 			{loc(), "/region/tongagrirobayofplenty"},
 			{loc(), "/region?type=quake"},
 			{loc(), "/felt/report?publicID=2013p407387"},

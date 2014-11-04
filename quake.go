@@ -61,9 +61,9 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, []byte(d))
 }
 
-// quakesV1 serves GeoJSON of quakes above an intensity in a region.
+// quakesRegionV1 serves GeoJSON of quakes above an intensity in a region.
 // Returns 404 if the regionID is not for a valid quake region.
-func quakesV1(w http.ResponseWriter, r *http.Request) {
+func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
 	// check we got the correct number of query params.  This rules out cache busters
@@ -78,8 +78,8 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check the intensity query is for valid options.
-	if _, ok := intensity[r.URL.Query().Get("intensity")]; !ok {
-		badRequest(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
+	if _, ok := intensity[r.URL.Query().Get("regionIntensity")]; !ok {
+		badRequest(w, r, "Invalid regionIntensity: "+r.URL.Query().Get("regionIntensity"))
 	}
 
 	// check the regionID query is valid.
@@ -118,7 +118,7 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
                          )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+r.URL.Query().Get("regionID")+` >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, r.URL.Query().Get("intensity"), r.URL.Query().Get("number")).Scan(&d)
+                         AND quality in ('`+strings.Join(qual, `','`)+`') limit $2 ) as f ) as fc`, r.URL.Query().Get("regionIntensity"), r.URL.Query().Get("number")).Scan(&d)
 	if err != nil {
 		serviceUnavailable(w, r, err)
 		return

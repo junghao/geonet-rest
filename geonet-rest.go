@@ -178,7 +178,7 @@ func quakeRoutes(w http.ResponseWriter, r *http.Request) {
 func quakesRoutes(w http.ResponseWriter, r *http.Request) {
 	switch r.Header.Get("Accept") {
 	case v1GeoJSON:
-		quakesV1(w, r)
+		quakesRegionV1(w, r)
 	default:
 		notAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+v1GeoJSON)
 	}

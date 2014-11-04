@@ -34,9 +34,9 @@
 
  `/quake/2013p407387`
 
-## Quakes in a Region
+## Quakes Possibly Felt in a Region
 
- **GET /quake?regionID=(region)&intensity=(intensity)&number=(n)&quality=(quality)**
+ **GET /quake?regionID=(region)&regionIntensity=(intensity)&number=(n)&quality=(quality)**
 
  Get quake information from the last 365 days.
  If no quakes are found for the query parameters then a null features array is returned.
@@ -44,7 +44,7 @@
 ### Parameters
 
  * `regionID` - a valid quake region identifier e.g., `newzealand`.
- * `intensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
+ * `regionIntensity` - the minimum intensity at the epicenter e.g., `weak`.  Must be one of `unnoticeable`, `weak`, `light`, `moderate`, `strong`, `severe`.
  * `number` - the maximum number of quakes to return.  Must be one of `30`, `100`, `500`, `1000`, `1500`.
  * `quality` - a comma separated list of quality values to be included in the response; `best`, `caution`, `deleted`, `good`.
 
@@ -52,5 +52,5 @@
 
 ### Example request:
 
- `/quake?regionID=newzealand&intensity=weak&number=30`
+ `/quake?regionID=newzealand&regionIntensity=weak&number=30`
 
