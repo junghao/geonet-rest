@@ -25,16 +25,11 @@ const (
 )
 
 var (
-	config      = initConfig()              // this will be loaded before all init() func are called.
-	db          *sql.DB                     // shared DB connection pool
-	client      *http.Client                // shared http client
-	req         = expvar.NewInt("requests") // counters for expvar
-	res         = expvar.NewMap("responses")
-	quality     map[string]int // maps for query parameter validation.  Initialized in initLookups()
-	intensity   map[string]int
-	number      map[string]int
-	quakeRegion map[string]int
-	allRegion   map[string]int
+	config = initConfig()              // this will be loaded before all init() func are called.
+	db     *sql.DB                     // shared DB connection pool
+	client *http.Client                // shared http client
+	req    = expvar.NewInt("requests") // counters for expvar
+	res    = expvar.NewMap("responses")
 )
 
 type Config struct {
@@ -114,8 +109,6 @@ func main() {
 	client = &http.Client{
 		Timeout: timeout,
 	}
-
-	initLookups()
 
 	http.Handle("/", handler())
 	log.Fatal(http.ListenAndServe(":"+config.Server.Port, nil))
@@ -238,89 +231,6 @@ func newsRoutes(w http.ResponseWriter, r *http.Request) {
 	default:
 		notAcceptable(w, r, "Can't find a route for this Accept header: "+r.Header.Get("Accept"))
 	}
-}
-
-// initLookups loads the query parameter validation maps.
-// Some of the values are loaded from the DB.
-func initLookups() {
-	quality = make(map[string]int)
-	quality = map[string]int{
-		"best":    1,
-		"caution": 1,
-		"deleted": 1,
-		"good":    1,
-	}
-
-	intensity = make(map[string]int)
-	intensity = map[string]int{
-		"unnoticeable": 1,
-		"weak":         1,
-		"light":        1,
-		"moderate":     1,
-		"strong":       1,
-		"severe":       1,
-	}
-
-	number = make(map[string]int)
-	number = map[string]int{
-		"3":    1,
-		"30":   1,
-		"100":  1,
-		"500":  1,
-		"1000": 1,
-		"1500": 1,
-	}
-
-	// quake regions
-	var reg string
-	quakeRegion = make(map[string]int)
-
-	rows, err := db.Query("select regionname FROM qrt.region where groupname in ('region', 'north', 'south')")
-	if err != nil {
-		log.Println("Problem loading quake region query lookups.")
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&reg)
-		if err != nil {
-			log.Println("Problem loading quake region query lookups.")
-			log.Fatal(err)
-		}
-		quakeRegion[reg] = 1
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Println("Problem loading quake region query lookups.")
-		log.Fatal(err)
-	}
-	rows.Close()
-
-	// all regions (quake and volcano)
-	allRegion = make(map[string]int)
-
-	rows, err = db.Query("select regionname FROM qrt.region")
-	if err != nil {
-		log.Println("Problem loading region query lookups.")
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&reg)
-		if err != nil {
-			log.Println("Problem loading region query lookups.")
-			log.Fatal(err)
-		}
-		allRegion[reg] = 1
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Println("Problem loading region query lookups.")
-		log.Fatal(err)
-	}
-	rows.Close()
 }
 
 // ok (200) - writes the content in b to the client.

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -11,32 +10,16 @@ import (
 func reportsV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
-	// check there isn't extra stuff in the URL - like a cache buster
-	if len(r.URL.Query()) != 1 {
-		badRequest(w, r, "detected extra stuff in the URL.")
+	q := &quakeQuery{
+		publicID:   r.URL.Query().Get("publicID"),
+		queryCount: 1,
+	}
+
+	if ok := q.validate(w, r); !ok {
 		return
 	}
 
-	publicID := r.URL.Query().Get("publicID")
-
-	if publicID == "" {
-		badRequest(w, r, "please specify a publicID")
-		return
-	}
-
-	// Check that the publicid exists in the local DB before calling felt.
-	var d string
-	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
-	if err == sql.ErrNoRows {
-		notFound(w, r, "invalid publicID: "+publicID)
-		return
-	}
-	if err != nil {
-		serviceUnavailable(w, r, err)
-		return
-	}
-
-	res, err := client.Get(feltURL + publicID + ".geojson")
+	res, err := client.Get(feltURL + q.publicID + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
 		serviceUnavailable(w, r, err)

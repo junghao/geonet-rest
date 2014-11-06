@@ -2,7 +2,10 @@ package main
 
 import (
 	"net/http"
-	"strings"
+)
+
+const (
+	regionLen = 8 // len("/region/")
 )
 
 // regions serves GeoJSON for classes of regions (quakes only atm).
@@ -46,19 +49,14 @@ func regionsV1(w http.ResponseWriter, r *http.Request) {
 func regionV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
-	regionID := r.URL.Path[len("/region/"):]
+	q := &regionQuery{
+		regionID:   r.URL.Path[regionLen:],
+		queryCount: 0,
+	}
 
-	// check there isn't extra stuff in the URL - like a cache buster
-	if len(r.URL.Query()) > 0 || strings.Contains(regionID, "/") {
-		badRequest(w, r, "detected extra stuff in the URL.")
+	if ok := q.validate(w, r); !ok {
 		return
 	}
-
-	// check the regionID query is valid.
-	if _, ok := allRegion[regionID]; !ok {
-		badRequest(w, r, "Invalid regionID: "+regionID)
-	}
-
 	var d string
 
 	err := db.QueryRow(`SELECT row_to_json(fc)
@@ -72,7 +70,7 @@ func regionV1(w http.ResponseWriter, r *http.Request) {
                          		title, 
                          		groupname as group
                            ) as l
-                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, regionID).Scan(&d)
+                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, q.regionID).Scan(&d)
 	if err != nil {
 		serviceUnavailable(w, r, err)
 		return

@@ -27,8 +27,6 @@ func setup() {
 	ts = httptest.NewServer(handler())
 
 	client = &http.Client{}
-
-	initLookups()
 }
 
 // teardown closes the db connection and  test server.  Defer this after setup() e.g.,
