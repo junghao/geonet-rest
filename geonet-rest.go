@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	config      Config
+	config      = initConfig()              // this will be loaded before all init() func are called.
 	db          *sql.DB                     // shared DB connection pool
 	client      *http.Client                // shared http client
 	req         = expvar.NewInt("requests") // counters for expvar
@@ -51,20 +51,12 @@ type Server struct {
 	Port string
 }
 
-// init loads configuration for this application.  It tries /etc/sysconfig/geonet-rest.json first and
+// initConfig loads configuration for this application.  It tries /etc/sysconfig/geonet-rest.json first and
 // if that is not found it tries ./geonet-rest.json
 // If the config is succesfully loaded from /etc/sysconfig/geonet-rest.json then the logging
 // switches to syslogging.
-func init() {
+func initConfig() Config {
 	f, err := ioutil.ReadFile("/etc/sysconfig/geonet-rest.json")
-	if err == nil {
-		logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
-		if err != nil {
-			log.Println("** logging to syslog **")
-			log.SetOutput(logwriter)
-		}
-	}
-
 	if err != nil {
 		log.Println("Could not load /etc/sysconfig/geonet-rest.json falling back to local file.")
 		f, err = ioutil.ReadFile("./geonet-rest.json")
@@ -72,14 +64,25 @@ func init() {
 			log.Println("Problem loading ./geonet-rest.json - can't find any config.")
 			log.Fatal(err)
 		}
+	} else {
+		logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
+		if err != nil {
+			log.Println("** logging to syslog **")
+			log.SetOutput(logwriter)
+		}
 	}
 
-	err = json.Unmarshal(f, &config)
+	var d Config
+	err = json.Unmarshal(f, &d)
 	if err != nil {
 		log.Println("Problem parsing config file.")
 		log.Fatal(err)
 	}
 
+	return d
+}
+
+func init() {
 	res.Init()
 	res.Add("2xx", 0)
 	res.Add("4xx", 0)
