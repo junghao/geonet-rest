@@ -9,6 +9,7 @@ const (
 )
 
 // regions serves GeoJSON for classes of regions (quakes only atm).
+// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
 func regionsV1(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", v1GeoJSON)
 
@@ -22,6 +23,30 @@ func regionsV1(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, r, "Invalid type: "+r.URL.Query().Get("type"))
 	}
 
+	ok(w, r, qrV1GeoJSON)
+}
+
+// region serves GeoJSON for a region.
+// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
+func regionV1(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", v1GeoJSON)
+
+	q := &regionQuery{
+		regionID:   r.URL.Path[regionLen:],
+		queryCount: 0,
+	}
+
+	if ok := q.validate(w, r); !ok {
+		return
+	}
+
+	region, _ := allRegion[q.regionID]
+
+	ok(w, r, region)
+}
+
+// quakeRegionsV1GJ queries the DB for GeoJSON for the quake regions.
+func quakeRegionsV1GJ() ([]byte, error) {
 	var d string
 
 	err := db.QueryRow(`SELECT row_to_json(fc)
@@ -36,27 +61,12 @@ func regionsV1(w http.ResponseWriter, r *http.Request) {
                          		groupname as group
                            ) as l
                          )) as properties FROM qrt.region as q where groupname in ('region', 'north', 'south')) as f ) as fc`).Scan(&d)
-	if err != nil {
-		serviceUnavailable(w, r, err)
-		return
-	}
 
-	ok(w, r, []byte(d))
+	return []byte(d), err
 }
 
-// region serves GeoJSON for a region.
-// Returns 404 if the region is does not exist.
-func regionV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
-
-	q := &regionQuery{
-		regionID:   r.URL.Path[regionLen:],
-		queryCount: 0,
-	}
-
-	if ok := q.validate(w, r); !ok {
-		return
-	}
+// regionV1GJ queries the DB for GeoJSON from the regionID.
+func regionV1GJ(regionID string) ([]byte, error) {
 	var d string
 
 	err := db.QueryRow(`SELECT row_to_json(fc)
@@ -70,11 +80,7 @@ func regionV1(w http.ResponseWriter, r *http.Request) {
                          		title, 
                          		groupname as group
                            ) as l
-                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, q.regionID).Scan(&d)
-	if err != nil {
-		serviceUnavailable(w, r, err)
-		return
-	}
+                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, regionID).Scan(&d)
 
-	ok(w, r, []byte(d))
+	return []byte(d), err
 }

@@ -10,11 +10,12 @@ import (
 )
 
 var (
+	qrV1GeoJSON []byte
 	quality     map[string]int // maps for query parameter validation.  Initialized in initLookups()
 	intensity   map[string]int
 	number      map[string]int
 	quakeRegion map[string]int
-	allRegion   map[string]int
+	allRegion   map[string][]byte
 )
 
 type quakeQuery struct {
@@ -108,7 +109,7 @@ func init() {
 	rows.Close()
 
 	// all regions (quake and volcano)
-	allRegion = make(map[string]int)
+	allRegion = make(map[string][]byte)
 
 	rows, err = db.Query("select regionname FROM qrt.region")
 	if err != nil {
@@ -123,7 +124,12 @@ func init() {
 			log.Println("Problem loading region query lookups.")
 			log.Fatal(err)
 		}
-		allRegion[reg] = 1
+		d, err := regionV1GJ(reg)
+		if err != nil {
+			log.Println("Problem loading region query lookups.")
+			log.Fatal(err)
+		}
+		allRegion[reg] = d
 	}
 	err = rows.Err()
 	if err != nil {
@@ -131,6 +137,12 @@ func init() {
 		log.Fatal(err)
 	}
 	rows.Close()
+
+	qrV1GeoJSON, err = quakeRegionsV1GJ()
+	if err != nil {
+		log.Println("Problem loading quake region geojson.")
+		log.Fatal(err)
+	}
 }
 
 // validate checks that the quakeQuery is valid and writes errors to the responseWriter
