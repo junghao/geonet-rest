@@ -40,9 +40,7 @@ func regionV1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	region, _ := allRegion[q.regionID]
-
-	ok(w, r, region)
+	ok(w, r, allRegion[q.regionID])
 }
 
 // quakeRegionsV1GJ queries the DB for GeoJSON for the quake regions.
