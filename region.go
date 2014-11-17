@@ -21,6 +21,7 @@ func regionsV1(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Query().Get("type") != "quake" {
 		badRequest(w, r, "Invalid type: "+r.URL.Query().Get("type"))
+		return
 	}
 
 	ok(w, r, qrV1GeoJSON)
