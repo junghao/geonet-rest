@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -24,6 +25,7 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 
 	var d string
 
+	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
@@ -49,6 +51,7 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 		serviceUnavailable(w, r, err)
 		return
 	}
+	dbTime.track(start, "quakeV1 db")
 
 	ok(w, r, []byte(d))
 }
@@ -72,6 +75,7 @@ func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
 
 	var d string
 
+	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
@@ -98,6 +102,7 @@ func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
 		serviceUnavailable(w, r, err)
 		return
 	}
+	dbTime.track(start, "quakeRegionV1 db")
 
 	ok(w, r, []byte(d))
 }
@@ -120,6 +125,7 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
 
 	var d string
 
+	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
@@ -146,6 +152,7 @@ func quakesV1(w http.ResponseWriter, r *http.Request) {
 		serviceUnavailable(w, r, err)
 		return
 	}
+	dbTime.track(start, "quakesV1 db")
 
 	ok(w, r, []byte(d))
 }
