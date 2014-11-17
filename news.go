@@ -55,7 +55,7 @@ func newsV1(w http.ResponseWriter, r *http.Request) {
 	newsID := r.URL.Path[len("/news/geonet"):]
 
 	// check there isn't extra stuff in the URL - like a cache buster
-	if len(r.URL.Query()) > 0 || strings.Contains(newsID, "/") {
+	if len(r.URL.Query()) > 0 || strings.Contains(newsID, "/") || strings.Contains(newsID, ";") {
 		badRequest(w, r, "detected extra stuff in the URL.")
 		return
 	}
