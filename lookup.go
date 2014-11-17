@@ -153,7 +153,7 @@ func (q *quakeQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	var d string
 
 	// check there isn't extra stuff in the URL - like a cache buster query or extra URL parts
-	if len(r.URL.Query()) != q.queryCount || strings.Contains(q.publicID, "/") {
+	if len(r.URL.Query()) != q.queryCount || strings.Contains(q.publicID, "/") || strings.Contains(q.publicID, ";") {
 		badRequest(w, r, "detected extra stuff in the URL.")
 		return false
 	}

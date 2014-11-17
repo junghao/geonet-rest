@@ -25,11 +25,13 @@ const (
 )
 
 var (
-	config = initConfig()              // this will be loaded before all init() func are called.
-	db     *sql.DB                     // shared DB connection pool
-	client *http.Client                // shared http client
-	req    = expvar.NewInt("requests") // counters for expvar
-	res    = expvar.NewMap("responses")
+	config  = initConfig()              // this will be loaded before all init() func are called.
+	db      *sql.DB                     // shared DB connection pool
+	client  *http.Client                // shared http client
+	req     = expvar.NewInt("requests") // counters for expvar
+	res     = expvar.NewMap("responses")
+	resTime timer
+	dbTime  timer
 )
 
 type Config struct {
@@ -82,6 +84,9 @@ func init() {
 	res.Add("2xx", 0)
 	res.Add("4xx", 0)
 	res.Add("5xx", 0)
+
+	resTime = timer{count: 0, time: 0, interval: 30 * time.Second, v: expvar.NewFloat("averageResponseTime")}
+	dbTime = timer{count: 0, time: 0, interval: 30 * time.Second, v: expvar.NewFloat("averageDBResponseTime")}
 }
 
 // main connects to the database, sets up request routing, and starts the http server.
@@ -109,6 +114,9 @@ func main() {
 	client = &http.Client{
 		Timeout: timeout,
 	}
+
+	go resTime.avg()
+	go dbTime.avg()
 
 	http.Handle("/", handler())
 	log.Fatal(http.ListenAndServe(":"+config.Server.Port, nil))
@@ -145,6 +153,7 @@ func get(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		req.Add(1)
 		if r.Method == "GET" {
+			defer resTime.track(time.Now(), "GET "+r.URL.RequestURI())
 			w.Header().Set("Cache-Control", cacheShort)
 			w.Header().Set("Surrogate-Control", cacheShort)
 			w.Header().Add("Vary", "Accept")

@@ -188,6 +188,26 @@ func TestRoutesExtra(t *testing.T) {
 	}
 }
 
+// TestRoutesSession tests the provided routes and if they should return a 200.
+// It appends a sessionid to URL and tests to check they return bad request.
+func TestRoutesSession(t *testing.T) {
+	setup()
+	defer teardown()
+
+	var b = routeTest{"", errContent, cacheShort, cacheLong, http.StatusBadRequest,
+		[]route{{"", ""}}}
+
+	for _, rt := range routes {
+		for _, r := range rt.routes {
+			if rt.response == http.StatusOK {
+				b.accept = rt.accept
+				b.routes[0] = route{r.id, r.url + ";jsessionid=tossyourcookies"}
+				b.test(t)
+			}
+		}
+	}
+}
+
 // TestRoutesBadAccept tests all routes with an bad Accept header.
 func TestRoutesBadAccept(t *testing.T) {
 	setup()
