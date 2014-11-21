@@ -1,28 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
 
-const (
-	quakeLen = 7 //  len("/quake/")
-)
+var intensityRe = regexp.MustCompile(`^(unnoticeable|weak|light|moderate|strong|severe)$`)
+var numberRe = regexp.MustCompile(`^(3|30|100|500|1000|1500)$`)
+var qualityRe = regexp.MustCompile(`^(best|caution|deleted|good)$`)
 
-// quakeV1 serves version 1 GeoJSON for a specific publicID.
-func quakeV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+// /quake/2013p407387
+type quakeQuery struct {
+	publicID string
+}
 
-	q := &quakeQuery{
-		publicID:   r.URL.Path[quakeLen:],
-		queryCount: 0,
+func (q *quakeQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	var d string
+
+	// Check that the publicid exists in the DB.  This is needed as the handle method will return empty
+	// JSON for an invalid publicID.
+	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
+	if err == sql.ErrNoRows {
+		notFound(w, r, "invalid publicID: "+q.publicID)
+		return false
 	}
-
-	if ok := q.validate(w, r); !ok {
-		return
+	if err != nil {
+		serviceUnavailable(w, r, err)
+		return false
 	}
+	return true
+}
 
+func (q *quakeQuery) handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
 	start := time.Now()
@@ -56,23 +68,42 @@ func quakeV1(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, []byte(d))
 }
 
-// quakesRegionV1 serves GeoJSON of quakes thay may have been felt above an intensity in a region.
+// /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
+// Quakes thay may have been felt above an intensity in a region.
 // The quakes could be outside the region.
-func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+type quakesRegionQuery struct {
+	regionID, regionIntensity, number string
+	quality                           []string
+}
 
-	q := &quakesQuery{
-		number:     r.URL.Query().Get("number"),
-		regionID:   r.URL.Query().Get("regionID"),
-		intensity:  r.URL.Query().Get("regionIntensity"),
-		quality:    strings.Split(r.URL.Query().Get("quality"), ","),
-		queryCount: 4,
+func (q *quakesRegionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+
+	if !numberRe.MatchString(q.number) {
+		badRequest(w, r, "Invalid number: "+q.number)
+		return false
 	}
 
-	if ok := q.validate(w, r); !ok {
-		return
+	if !intensityRe.MatchString(q.regionIntensity) {
+		badRequest(w, r, "Invalid region intensity: "+q.regionIntensity)
+		return false
 	}
 
+	if _, ok := quakeRegion[q.regionID]; !ok {
+		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		return false
+	}
+
+	for _, q := range q.quality {
+		if !qualityRe.MatchString(q) {
+			badRequest(w, r, "Invalid quality: "+q)
+			return false
+		}
+	}
+
+	return true
+}
+
+func (q *quakesRegionQuery) handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
 	start := time.Now()
@@ -97,7 +128,7 @@ func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
                          )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+q.regionID+` >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(q.quality, `','`)+`') limit $2 ) as f ) as fc`, q.intensity, q.number).Scan(&d)
+                         AND quality in ('`+strings.Join(q.quality, `','`)+`') limit $2 ) as f ) as fc`, q.regionIntensity, q.number).Scan(&d)
 	if err != nil {
 		serviceUnavailable(w, r, err)
 		return
@@ -107,22 +138,41 @@ func quakesRegionV1(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, []byte(d))
 }
 
-// quakesV1 serves GeoJSON of quakes that occured in a region filtered by intensity.
-func quakesV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
+// Quakes that occured in a region filtered by intensity.
+type quakesQuery struct {
+	regionID, intensity, number string
+	quality                     []string
+}
 
-	q := &quakesQuery{
-		number:     r.URL.Query().Get("number"),
-		regionID:   r.URL.Query().Get("regionID"),
-		intensity:  r.URL.Query().Get("intensity"),
-		quality:    strings.Split(r.URL.Query().Get("quality"), ","),
-		queryCount: 4,
+func (q *quakesQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+
+	if !numberRe.MatchString(q.number) {
+		badRequest(w, r, "Invalid number: "+q.number)
+		return false
 	}
 
-	if ok := q.validate(w, r); !ok {
-		return
+	if !intensityRe.MatchString(q.intensity) {
+		badRequest(w, r, "Invalid intensity: "+q.intensity)
+		return false
 	}
 
+	if _, ok := quakeRegion[q.regionID]; !ok {
+		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		return false
+	}
+
+	for _, q := range q.quality {
+		if !qualityRe.MatchString(q) {
+			badRequest(w, r, "Invalid quality: "+q)
+			return false
+		}
+	}
+
+	return true
+}
+
+func (q *quakesQuery) handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
 	start := time.Now()

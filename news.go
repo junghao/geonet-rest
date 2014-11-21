@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+const (
+	mlink   = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
+	newsURL = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
+)
+
 // Feed is used for unmarshaling XML (from the GeoNet RSS news feed)
 // and marshaling JSON
 type Feed struct {
@@ -47,19 +52,14 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 	return f, err
 }
 
-// news fetches the GeoNet News RSS feed and converts it to simple JSON.
-func newsV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1JSON)
+// /news/geonet
+type newsQuery struct{}
 
-	// will only be geonet at the moment.
-	newsID := r.URL.Path[len("/news/geonet"):]
+func (q *newsQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	return true
+}
 
-	// check there isn't extra stuff in the URL - like a cache buster
-	if len(r.URL.Query()) > 0 || strings.Contains(newsID, "/") || strings.Contains(newsID, ";") {
-		badRequest(w, r, "detected extra stuff in the URL.")
-		return
-	}
-
+func (q *newsQuery) handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {

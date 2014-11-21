@@ -4,43 +4,34 @@ import (
 	"net/http"
 )
 
-const (
-	regionLen = 8 // len("/region/")
-)
+func (q *regionsQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	return true
+}
 
-// regions serves GeoJSON for classes of regions (quakes only atm).
-// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
-func regionsV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+// /region?type=quake
+// GeoJSON for classes of regions (quakes only atm).
+type regionsQuery struct{}
 
-	// check we got the correct number of query params.  This rules out cache busters
-	if len(r.URL.Query()) != 1 {
-		badRequest(w, r, "detected extra stuff in the URL.")
-		return
-	}
-
-	if r.URL.Query().Get("type") != "quake" {
-		badRequest(w, r, "Invalid type: "+r.URL.Query().Get("type"))
-		return
-	}
-
+// regions change very infrequently so they are loaded on startup and cached see -lookups.go
+func (q *regionsQuery) handle(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, qrV1GeoJSON)
 }
 
-// region serves GeoJSON for a region.
-// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
-func regionV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+// /region/wellington
+type regionQuery struct {
+	regionID string
+}
 
-	q := &regionQuery{
-		regionID:   r.URL.Path[regionLen:],
-		queryCount: 0,
+func (q *regionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	if _, ok := allRegion[q.regionID]; !ok {
+		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		return false
 	}
 
-	if ok := q.validate(w, r); !ok {
-		return
-	}
+	return true
+}
 
+func (q *regionQuery) handle(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, allRegion[q.regionID])
 }
 

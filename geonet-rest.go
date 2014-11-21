@@ -14,11 +14,6 @@ import (
 )
 
 const (
-	v1GeoJSON   = "application/vnd.geo+json;version=1"
-	v1JSON      = "application/json;version=1"
-	mlink       = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
-	newsURL     = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
-	feltURL     = "http://felt.geonet.org.nz/services/reports/"
 	cacheShort  = "max-age=10"
 	cacheMedium = "max-age=300"
 	cacheLong   = "max-age=86400"
@@ -125,29 +120,12 @@ func main() {
 // handler creates a mux and wraps it with default handlers.  Seperate function to enable testing.
 func handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", noRoute)
-	mux.HandleFunc("/quake/", quakeRoutes)
-	mux.HandleFunc("/quake", quakesRoutes)
-	mux.HandleFunc("/region/", regionRoutes)
-	mux.HandleFunc("/region", regionsRoutes)
-	mux.HandleFunc("/felt/report", reportRoutes)
-	mux.HandleFunc("/news/", newsRoutes)
+	mux.HandleFunc("/", router)
 	return get(httpgzip.NewHandler(mux))
 }
 
-func noRoute(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		badRequest(w, r, "service not found.")
-	case v1JSON:
-		badRequest(w, r, "service not found.")
-	default:
-		notAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+v1GeoJSON)
-	}
-}
-
 // get creates an http handler that only responds to http GET requests.  All other methods are an error.
-// Sets a default Cache-Control and Surrogate-Control header.
+// Sets default Cache-Control and Surrogate-Control headers.
 // Increments the request counter.
 func get(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -163,83 +141,6 @@ func get(h http.Handler) http.Handler {
 		res.Add("4xx", 1)
 		http.Error(w, "Method not allowed.", http.StatusMethodNotAllowed)
 	})
-}
-
-// quakeRoutes handles requests  for single quakes e.g., /quake/2013p12345
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func quakeRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		quakeV1(w, r)
-	default:
-		notAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+v1GeoJSON)
-	}
-}
-
-// quakesRoutes handles request that filter lists of quakes e.g., /quake?regionID=...
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func quakesRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		switch r.URL.Query().Get("regionIntensity") {
-		case "":
-			quakesV1(w, r)
-		default:
-			quakesRegionV1(w, r)
-		}
-	default:
-		notAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+v1GeoJSON)
-	}
-}
-
-// regionRoutes handles requests  for single regions e.g., /region/newzealand
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func regionRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		regionV1(w, r)
-	default:
-		notAcceptable(w, r, "Can't find a route for this Accept header: "+r.Header.Get("Accept"))
-	}
-}
-
-// regionsRoutes handles request that filter lists of region e.g., /region?type=quake.
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func regionsRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		regionsV1(w, r)
-	default:
-		notAcceptable(w, r, "Can't find a route for this Accept header: "+r.Header.Get("Accept"))
-	}
-}
-
-// reportRoutes handles request that filter lists of region e.g., /felt/report?publicID=2013p123456.
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func reportRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1GeoJSON:
-		reportsV1(w, r)
-	default:
-		notAcceptable(w, r, "Can't find a route for this Accept header: "+r.Header.Get("Accept"))
-	}
-}
-
-// newsRoutes handles requests  for single newss e.g., /news/geonet
-// requests with an empty or wild card Accept header ("" or "*/*") are routed to
-// the current highest version of the API.
-func newsRoutes(w http.ResponseWriter, r *http.Request) {
-	switch r.Header.Get("Accept") {
-	case v1JSON:
-		newsV1(w, r)
-	default:
-		notAcceptable(w, r, "Can't find a route for this Accept header: "+r.Header.Get("Accept"))
-	}
 }
 
 // ok (200) - writes the content in b to the client.
