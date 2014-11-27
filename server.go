@@ -186,7 +186,7 @@ func badRequest(w http.ResponseWriter, r *http.Request, message string) {
 
 // serviceUnavailable (500) - some sort of internal server error.
 func serviceUnavailable(w http.ResponseWriter, r *http.Request, err error) {
-	log.Println(r.RequestURI + " 500")
+	log.Printf("ERROR: 500 %s", r.URL)
 	res.Add("5xx", 1)
 	http.Error(w, "Sad trombone.  Something went wrong and for that we are very sorry.  Please try again in a few minutes.", http.StatusServiceUnavailable)
 }
