@@ -49,7 +49,12 @@ func router(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", v1GeoJSON)
 		switch {
 		// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" && len(r.URL.Query()) == 4 && r.URL.Query().Get("intensity") != "":
+		case r.URL.Path == "/quake" &&
+			len(r.URL.Query()) == 4 &&
+			r.URL.Query().Get("intensity") != "" &&
+			r.URL.Query().Get("regionID") != "" &&
+			r.URL.Query().Get("number") != "" &&
+			r.URL.Query().Get("quality") != "":
 			q := &quakesQuery{
 				number:    r.URL.Query().Get("number"),
 				regionID:  r.URL.Query().Get("regionID"),
@@ -58,7 +63,11 @@ func router(w http.ResponseWriter, r *http.Request) {
 			}
 			serve(q, w, r)
 		// /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" && len(r.URL.Query()) == 4 && r.URL.Query().Get("regionIntensity") != "":
+		case r.URL.Path == "/quake" && len(r.URL.Query()) == 4 &&
+			r.URL.Query().Get("regionIntensity") != "" &&
+			r.URL.Query().Get("regionID") != "" &&
+			r.URL.Query().Get("number") != "" &&
+			r.URL.Query().Get("quality") != "":
 			q := &quakesRegionQuery{
 				number:          r.URL.Query().Get("number"),
 				regionID:        r.URL.Query().Get("regionID"),
