@@ -10,6 +10,7 @@ import (
 	"log"
 	"log/syslog"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -35,8 +36,8 @@ type Config struct {
 }
 
 type DataBase struct {
-	User, Password             string
-	MaxOpenConns, MaxIdleConns int
+	Host, User, Password                          string
+	MaxOpenConns, MaxIdleConns, ConnectionTimeOut int
 }
 
 type Server struct {
@@ -87,7 +88,11 @@ func init() {
 // main connects to the database, sets up request routing, and starts the http server.
 func main() {
 	var err error
-	db, err = sql.Open("postgres", "connect_timeout=1 user="+config.DataBase.User+" password="+config.DataBase.Password+" dbname=hazard sslmode=disable")
+	db, err = sql.Open("postgres", "connect_timeout=1 user="+config.DataBase.User+
+		" password="+config.DataBase.Password+
+		" host="+config.DataBase.Host+
+		" connect_timeout="+strconv.Itoa(config.DataBase.ConnectionTimeOut)+
+		" dbname=hazard sslmode=disable")
 	if err != nil {
 		log.Println("Problem with DB config.")
 		log.Fatal(err)
@@ -97,11 +102,8 @@ func main() {
 	db.SetMaxIdleConns(config.DataBase.MaxIdleConns)
 	db.SetMaxOpenConns(config.DataBase.MaxOpenConns)
 
-	err = db.Ping()
-
-	if err != nil {
-		log.Println("Problem pinging DB - is it up and contactable.")
-		log.Fatal(err)
+	if err = db.Ping(); err != nil {
+		log.Println("ERROR: problem pinging DB - is it up and contactable? 500s will be served")
 	}
 
 	// create an http client to share.
