@@ -58,7 +58,7 @@ func initConfig() Config {
 		}
 	} else {
 		logwriter, err := syslog.New(syslog.LOG_NOTICE, "geonet-rest")
-		if err != nil {
+		if err == nil {
 			log.Println("** logging to syslog **")
 			log.SetOutput(logwriter)
 		}
