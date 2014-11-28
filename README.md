@@ -2,9 +2,6 @@
 
 Rest API for GeoNet web site data.
 
-[API Docs](api-docs/README.md)
-
-
 ## Development 
 
 Requires Go 1.2.1 or newer (for db.SetMaxOpenConns(n)).
