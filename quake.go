@@ -183,7 +183,7 @@ func (q *quakesRegionQuery) handle(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
-                         FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
+                         FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
                          ST_AsGeoJSON(q.origin_geom)::json as geometry,
                          row_to_json((SELECT l FROM
@@ -288,7 +288,7 @@ func (q *quakesQuery) handle(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
-                         FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
+                         FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
                          ST_AsGeoJSON(q.origin_geom)::json as geometry,
                          row_to_json((SELECT l FROM
