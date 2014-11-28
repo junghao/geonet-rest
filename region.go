@@ -1,46 +1,85 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
 )
 
-const (
-	regionLen = 8 // len("/region/")
-)
+// /region?type=quake
 
-// regions serves GeoJSON for classes of regions (quakes only atm).
-// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
-func regionsV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+var regionsQueryD = &doc{
+	Title:       "Quake Region",
+	Description: "retrieve quake regions.",
+	Example:     "/region?type=quake",
+	URI:         "/region?type=quake",
+	Params: map[string]template.HTML{
+		"type": `the region type.  The only allowable value is <code>quake</code>.`,
+	},
+	Props: map[string]template.HTML{
+		`regionID`: `a unique indentifier for the region.`,
+		`title`:    `the region title.`,
+		`group`:    `the region group.`,
+	},
+	Result: `{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[190,-20],[182,-37],[184,-44],[167,-49],[160,-54],[164,-47],[165,-44],[170,-35],[174,-32],[190,-20]]]},"properties":{"regionID":"newzealand","title":"New Zealand","group":"region"}},
+	{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[173.251,-38.138],[175.583,-38.045],[176.474,-36.379],[174.285,-34.026],[171.857,-34.135],[173.251,-38.138]]]},"properties":{"regionID":"aucklandnorthland","title":"Auckland and Northland","group":"north"}},
+	{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[176.931,-38.688],[175.722,-39.809],[177.56,-40.638],[178.561,-39.274],[176.931,-38.688]]]},"properties":{"regionID":"hawkesbay","title":"Hawke's Bay","group":"north"}},
+	{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[172.004,-39.632],[174.156,-40.456],[175.028,-39.526],[175.583,-38.045],[173.251,-38.138],[172.004,-39.632]]]},"properties":{"regionID":"taranaki","title":"Taranaki","group":"north"}}]}`,
+}
 
-	// check we got the correct number of query params.  This rules out cache busters
-	if len(r.URL.Query()) != 1 {
-		badRequest(w, r, "detected extra stuff in the URL.")
-		return
-	}
+func (q *regionsQuery) doc() *doc {
+	return regionsQueryD
+}
 
-	if r.URL.Query().Get("type") != "quake" {
-		badRequest(w, r, "Invalid type: "+r.URL.Query().Get("type"))
-		return
-	}
+type regionsQuery struct{}
 
+func (q *regionsQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	return true
+}
+
+// regions change very infrequently so they are loaded on startup and cached see -lookups.go
+func (q *regionsQuery) handle(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, qrV1GeoJSON)
 }
 
-// region serves GeoJSON for a region.
-// The regions change very infrequently so they are loaded on startup and cached see -lookups.go
-func regionV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+// /region/wellington
 
-	q := &regionQuery{
-		regionID:   r.URL.Path[regionLen:],
-		queryCount: 0,
+var regionQueryD = &doc{
+	Title:       "Region Information",
+	Description: "Look up region information",
+	Example:     "/region/wellington",
+	URI:         "/region/(regionID)",
+	Params: map[string]template.HTML{
+		"regionID": `A region ID e.g., <code>wellington</code>.`,
+	},
+	Props: map[string]template.HTML{
+		`regionID`: `a unique indentifier for the region.`,
+		`title`:    `the region title.`,
+		`group`:    `the region group.`,
+	},
+	Result: `{"type":"FeatureCollection","features":[{"type":"Feature","geometry":
+	{"type":"Polygon","coordinates":[[[172.951,-41.767],[175.748,-42.908],
+	[177.56,-40.638],[175.028,-39.526],[174.109,-40.462],[172.951,-41.767]]]},
+	"properties":{"regionID":"wellington","title":"Wellington and Marlborough","group":"north"}}]}`,
+}
+
+func (q *regionQuery) doc() *doc {
+	return regionQueryD
+}
+
+type regionQuery struct {
+	regionID string
+}
+
+func (q *regionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	if _, ok := allRegion[q.regionID]; !ok {
+		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		return false
 	}
 
-	if ok := q.validate(w, r); !ok {
-		return
-	}
+	return true
+}
 
+func (q *regionQuery) handle(w http.ResponseWriter, r *http.Request) {
 	ok(w, r, allRegion[q.regionID])
 }
 

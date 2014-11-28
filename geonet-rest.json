@@ -3,9 +3,12 @@
 		"User": "hazard_r",
 		"Password": "test",
 		"MaxOpenConns": 30, 
-		"MaxIdleConns": 20
+		"MaxIdleConns": 20,
+		"Host": "localhost",
+		"ConnectionTimeOut": 5
 	},
 	"Server": {
 		"Port": "8080"
-	}
+	},
+	"Production": false
 }

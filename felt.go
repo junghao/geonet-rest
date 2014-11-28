@@ -1,24 +1,59 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 )
 
-// reports fetches felt reports from the existing web service and prints them.
-func reportsV1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", v1GeoJSON)
+const (
+	feltURL = "http://felt.geonet.org.nz/services/reports/"
+)
 
-	q := &quakeQuery{
-		publicID:   r.URL.Query().Get("publicID"),
-		queryCount: 1,
+// /felt/report?publicID=2013p407387
+
+var feltQueryD = &doc{
+	Title:       "Felt",
+	Description: "Look up Felt Report information about earthquakes",
+	Example:     "/felt/report?publicID=2013p407387",
+	URI:         "/felt/report?publicID=(publicID)",
+	Params: map[string]template.HTML{
+		"publicID": `a valid quake ID e.g., <code>2014p715167</code>`,
+	},
+	Props: map[string]template.HTML{
+		"todo": `todo`,
+	},
+	Result: `todo`,
+}
+
+func (q *feltQuery) doc() *doc {
+	return feltQueryD
+}
+
+type feltQuery struct {
+	publicID string
+}
+
+func (q *feltQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+	var d string
+
+	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty
+	// JSON for an invalid publicID.
+	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
+	if err == sql.ErrNoRows {
+		notFound(w, r, "invalid publicID: "+q.publicID)
+		return false
 	}
-
-	if ok := q.validate(w, r); !ok {
-		return
+	if err != nil {
+		serviceUnavailable(w, r, err)
+		return false
 	}
+	return true
+}
 
+func (q *feltQuery) handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(feltURL + q.publicID + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
