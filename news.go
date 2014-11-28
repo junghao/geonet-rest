@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -53,6 +54,41 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 }
 
 // /news/geonet
+
+var newsQueryD = &doc{
+	Title:       "News",
+	Description: " Returns a simple JSON version of the GeoNet News RSS feed.",
+	Example:     "/news/geonet",
+	URI:         "/news/geonet",
+	Params: map[string]template.HTML{
+		"none": `no query parameters are requiresd.`,
+	},
+	Props: map[string]template.HTML{
+		"mlink":     "a link to a mobile version of the news story.",
+		"link":      "a link to the news story.",
+		"published": "the date the story was published",
+		"title":     "the title of the story.",
+	},
+	Result: `{
+		"feed": [
+		{
+		"mlink": "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId=12222528",
+		"link": "http://info.geonet.org.nz/display/home/2014/11/26/GeoNet+News+Issue+20",
+		"published": "2014-11-25T22:00:01Z",
+		"title": "GeoNet News Issue 20"
+		},
+		{
+		"mlink": "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId=12222520",
+		"link": "http://info.geonet.org.nz/display/appdata/2014/11/19/Run%2C+don%27t+walk+to+your+app+store%3A+GeoNet+Quake+app+upgrade+now+available",
+		"published": "2014-11-18T23:42:15Z",
+		"title": "Run, don't walk to your app store: GeoNet Quake app upgrade now available"
+		}]}`,
+}
+
+func (q *newsQuery) doc() *doc {
+	return newsQueryD
+}
+
 type newsQuery struct{}
 
 func (q *newsQuery) validate(w http.ResponseWriter, r *http.Request) bool {

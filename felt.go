@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 )
@@ -12,6 +13,25 @@ const (
 )
 
 // /felt/report?publicID=2013p407387
+
+var feltQueryD = &doc{
+	Title:       "Felt",
+	Description: "Look up Felt Report information about earthquakes",
+	Example:     "/felt/report?publicID=2013p407387",
+	URI:         "/felt/report?publicID=(publicID)",
+	Params: map[string]template.HTML{
+		"publicID": `a valid quake ID e.g., <code>2014p715167</code>`,
+	},
+	Props: map[string]template.HTML{
+		"todo": `todo`,
+	},
+	Result: `todo`,
+}
+
+func (q *feltQuery) doc() *doc {
+	return feltQueryD
+}
+
 type feltQuery struct {
 	publicID string
 }

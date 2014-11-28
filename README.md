@@ -35,8 +35,7 @@ Run all tests (including those in sub dirs):
 
 ### API Documentation
 
-* Write public documentation for the rest API using Github flavoured markdown in the tests for each package. 
-* Use scripts/docs to generate the documentation in `api-docs/endpoints`.
+API documentation is generated from doc{} structs in the code.  Run the application and visit `http://localhost:8080/api-docs`.
 
 ### API Changes
 
@@ -54,7 +53,7 @@ Run all tests (including those in sub dirs):
 * Change the tests.  
 * Update the documentation.  
 * Make the changes.  
-* Update the routes.  * Make sure that if no `Accept` header is present requests route to the latest version of the API.
+* Update the routes.  
 
 
 ### Database

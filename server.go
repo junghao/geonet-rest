@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"expvar"
@@ -31,8 +32,9 @@ var (
 )
 
 type Config struct {
-	DataBase DataBase
-	Server   Server
+	DataBase   DataBase
+	Server     Server
+	Production bool // controls the banner in web pages etc.
 }
 
 type DataBase struct {
@@ -150,6 +152,15 @@ func ok(w http.ResponseWriter, r *http.Request, b []byte) {
 	// Haven't bothered logging sucesses.
 	res.Add("2xx", 1)
 	w.Write(b)
+}
+
+// ok (200) - writes the content in b to the client.
+// This is useful where writing content to a buffer before returning it to the user
+// makes sense.  For example when rendering a template that may result in errors.
+func okBuf(w http.ResponseWriter, r *http.Request, b *bytes.Buffer) {
+	// Haven't bothered logging 200s.
+	res.Add("2xx", 1)
+	b.WriteTo(w)
 }
 
 // notFound (404) - whatever the client was looking for we haven't got it.  The message should try
