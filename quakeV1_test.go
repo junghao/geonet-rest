@@ -24,9 +24,9 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"github.com/GeoNet/app/web"
+	"github.com/GeoNet/app/web/webtest"
 	"log"
-	"net/http"
 	"testing"
 )
 
@@ -68,23 +68,18 @@ func TestQuakeV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	req, _ := http.NewRequest("GET", ts.URL+"/quake/2013p407387", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-
-	b, _ := ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c := webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake/2013p407387",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err := c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var f QuakeFeatures
-	err := json.Unmarshal(b, &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -170,24 +165,19 @@ func TestQuakesRegionV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&regionIntensity=severe&number=30&quality=best,caution,good", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-
-	b, _ := ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c := webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake?regionID=newzealand&regionIntensity=severe&number=30&quality=best,caution,good",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err := c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var f QuakeFeatures
 
-	err := json.Unmarshal(b, &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -198,15 +188,14 @@ func TestQuakesRegionV1(t *testing.T) {
 
 	// Check that deleted quakes are included in the response.
 	// This is a change from the existing GeoNet services.
-	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=newzealand&regionIntensity=unnoticeable&number=1000&quality=best,caution,good,deleted", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ = client.Do(req)
-	defer res.Body.Close()
+	c = webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake?regionID=newzealand&regionIntensity=unnoticeable&number=1000&quality=best,caution,good,deleted",
+	}
 
-	b, _ = ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	b, err = c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = json.Unmarshal(b, &f)
@@ -249,26 +238,19 @@ func TestQuakesV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	// There should be 2 quakes that are felt in the Wellington region and no quakes that occur in the Wellington region.
-	// This tests the difference between regionIntensity and intensity
-	req, _ := http.NewRequest("GET", ts.URL+"/quake?regionID=wellington&intensity=weak&number=30&quality=best,caution,good", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-
-	b, _ := ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c := webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake?regionID=wellington&intensity=weak&number=30&quality=best,caution,good",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err := c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var f QuakeFeatures
 
-	err := json.Unmarshal(b, &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -277,19 +259,14 @@ func TestQuakesV1(t *testing.T) {
 		t.Errorf("Found wrong number of features: %d", len(f.Features))
 	}
 
-	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=wellington&regionIntensity=weak&number=30&quality=best,caution,good", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ = client.Do(req)
-	defer res.Body.Close()
-
-	b, _ = ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c = webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake?regionID=wellington&regionIntensity=weak&number=30&quality=best,caution,good",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err = c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = json.Unmarshal(b, &f)
@@ -302,19 +279,14 @@ func TestQuakesV1(t *testing.T) {
 	}
 
 	// There should be 7 quakes weak and above in the Canterbury region.
-	req, _ = http.NewRequest("GET", ts.URL+"/quake?regionID=canterbury&intensity=weak&number=30&quality=best,caution,good", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ = client.Do(req)
-	defer res.Body.Close()
-
-	b, _ = ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c = webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/quake?regionID=canterbury&intensity=weak&number=30&quality=best,caution,good",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err = c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = json.Unmarshal(b, &f)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/GeoNet/app/web"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -19,7 +20,7 @@ var propsD = map[string]template.HTML{
 	`publicID`:         `the unique public identifier for this quake.`,
 	`time`:             `the origin time of the quake.`,
 	`depth`:            `the depth of the quake in km.`,
-	`magnitude`:        `the summary magnitude for the quake.  This is *notRichter magnitude.`,
+	`magnitude`:        `the summary magnitude for the quake.  This is <b>not</b> Richter magnitude.`,
 	`type`:             `the event type; earthquake, landslide etc.`,
 	`agency`:           `the agency that located this quake.  The official GNS/GeoNet agency name for this field is WEL(*).`,
 	`locality`:         `distance and direction to the nearest locality.`,
@@ -62,11 +63,11 @@ func (q *quakeQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	// JSON for an invalid publicID.
 	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
 	if err == sql.ErrNoRows {
-		notFound(w, r, "invalid publicID: "+q.publicID)
+		web.NotFound(w, r, "invalid publicID: "+q.publicID)
 		return false
 	}
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 	return true
@@ -98,12 +99,13 @@ func (q *quakeQuery) handle(w http.ResponseWriter, r *http.Request) {
                            ) as l
                          )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, q.publicID).Scan(&d)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	dbTime.track(start, "quakeV1 db")
+	web.DBTime.Track(start, "DB quakeV1")
 
-	ok(w, r, []byte(d))
+	b := []byte(d)
+	web.Ok(w, r, &b)
 }
 
 // /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
@@ -153,23 +155,23 @@ type quakesRegionQuery struct {
 func (q *quakesRegionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 
 	if !numberRe.MatchString(q.number) {
-		badRequest(w, r, "Invalid number: "+q.number)
+		web.BadRequest(w, r, "Invalid number: "+q.number)
 		return false
 	}
 
 	if !intensityRe.MatchString(q.regionIntensity) {
-		badRequest(w, r, "Invalid region intensity: "+q.regionIntensity)
+		web.BadRequest(w, r, "Invalid region intensity: "+q.regionIntensity)
 		return false
 	}
 
 	if _, ok := quakeRegion[q.regionID]; !ok {
-		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
 		return false
 	}
 
 	for _, q := range q.quality {
 		if !qualityRe.MatchString(q) {
-			badRequest(w, r, "Invalid quality: "+q)
+			web.BadRequest(w, r, "Invalid quality: "+q)
 			return false
 		}
 	}
@@ -204,12 +206,13 @@ func (q *quakesRegionQuery) handle(w http.ResponseWriter, r *http.Request) {
                          )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+q.regionID+` >= qrt.intensity_to_mmi($1)
                          AND quality in ('`+strings.Join(q.quality, `','`)+`') limit $2 ) as f ) as fc`, q.regionIntensity, q.number).Scan(&d)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	dbTime.track(start, "quakeRegionV1 db")
+	web.DBTime.Track(start, "DB quakeRegionV1")
 
-	ok(w, r, []byte(d))
+	b := []byte(d)
+	web.Ok(w, r, &b)
 }
 
 // /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
@@ -258,23 +261,23 @@ type quakesQuery struct {
 func (q *quakesQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 
 	if !numberRe.MatchString(q.number) {
-		badRequest(w, r, "Invalid number: "+q.number)
+		web.BadRequest(w, r, "Invalid number: "+q.number)
 		return false
 	}
 
 	if !intensityRe.MatchString(q.intensity) {
-		badRequest(w, r, "Invalid intensity: "+q.intensity)
+		web.BadRequest(w, r, "Invalid intensity: "+q.intensity)
 		return false
 	}
 
 	if _, ok := quakeRegion[q.regionID]; !ok {
-		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
 		return false
 	}
 
 	for _, q := range q.quality {
 		if !qualityRe.MatchString(q) {
-			badRequest(w, r, "Invalid quality: "+q)
+			web.BadRequest(w, r, "Invalid quality: "+q)
 			return false
 		}
 	}
@@ -309,10 +312,11 @@ func (q *quakesQuery) handle(w http.ResponseWriter, r *http.Request) {
                          )) as properties FROM qrt.quakeinternal_v2 as q where maxmmi >= qrt.intensity_to_mmi($1)
                          AND quality in ('`+strings.Join(q.quality, `','`)+`')  AND ST_Contains((select geom from qrt.region where regionname = $3), ST_Shift_Longitude(origin_geom)) limit $2 ) as f ) as fc`, q.intensity, q.number, q.regionID).Scan(&d)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	dbTime.track(start, "quakesV1 db")
+	web.DBTime.Track(start, "DB quakesV1")
 
-	ok(w, r, []byte(d))
+	b := []byte(d)
+	web.Ok(w, r, &b)
 }

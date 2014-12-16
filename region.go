@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/GeoNet/app/web"
 	"html/template"
 	"net/http"
 )
@@ -38,7 +39,7 @@ func (q *regionsQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 
 // regions change very infrequently so they are loaded on startup and cached see -lookups.go
 func (q *regionsQuery) handle(w http.ResponseWriter, r *http.Request) {
-	ok(w, r, qrV1GeoJSON)
+	web.Ok(w, r, &qrV1GeoJSON)
 }
 
 // /region/wellington
@@ -72,7 +73,7 @@ type regionQuery struct {
 
 func (q *regionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	if _, ok := allRegion[q.regionID]; !ok {
-		badRequest(w, r, "Invalid regionID: "+q.regionID)
+		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
 		return false
 	}
 
@@ -80,7 +81,8 @@ func (q *regionQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func (q *regionQuery) handle(w http.ResponseWriter, r *http.Request) {
-	ok(w, r, allRegion[q.regionID])
+	b := allRegion[q.regionID]
+	web.Ok(w, r, &b)
 }
 
 // quakeRegionsV1GJ queries the DB for GeoJSON for the quake regions.

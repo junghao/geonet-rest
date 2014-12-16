@@ -14,9 +14,9 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"github.com/GeoNet/app/web"
+	"github.com/GeoNet/app/web/webtest"
 	"log"
-	"net/http"
 	"testing"
 )
 
@@ -51,24 +51,19 @@ func TestRegionsV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	req, _ := http.NewRequest("GET", ts.URL+"/region?type=quake", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-
-	b, _ := ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c := webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/region?type=quake",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err := c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var f RegionFeatures
 
-	err := json.Unmarshal(b, &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,24 +94,19 @@ func TestRegionV1(t *testing.T) {
 	setup()
 	defer teardown()
 
-	req, _ := http.NewRequest("GET", ts.URL+"/region/wellington", nil)
-	req.Header.Add("Accept", v1GeoJSON)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-
-	b, _ := ioutil.ReadAll(res.Body)
-
-	if res.StatusCode != 200 {
-		t.Errorf("Non 200 error code: %d", res.StatusCode)
+	c := webtest.Content{
+		Accept: web.V1GeoJSON,
+		URI:    "/region/wellington",
 	}
 
-	if res.Header.Get("Content-Type") != v1GeoJSON {
-		t.Errorf("incorrect Content-Type")
+	b, err := c.Get(ts)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var f RegionFeatures
 
-	err := json.Unmarshal(b, &f)
+	err = json.Unmarshal(b, &f)
 	if err != nil {
 		log.Fatal(err)
 	}

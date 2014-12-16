@@ -11,15 +11,15 @@ package main
 // 4. When you are ready to publish public html documentation for the route then add it's doc method to the appropriate endpoint  in api-doc.go
 
 import (
+	"github.com/GeoNet/app/web"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
+// These constants are the length of parts of the URI and are used for
+// extracting query params embedded in the URI.
 const (
-	v1GeoJSON    = "application/vnd.geo+json;version=1"
-	v1JSON       = "application/json;version=1"
-	htmlHead     = "text/html; charset=utf-8"
 	quakeLen     = 7  //  len("/quake/")
 	regionLen    = 8  // len("/region/")
 	endpointsLen = 19 // len("/api-docs/endpoint/")
@@ -52,8 +52,8 @@ func serve(q query, w http.ResponseWriter, r *http.Request) {
 func router(w http.ResponseWriter, r *http.Request) {
 	switch {
 	// application/vnd.geo+json;version=1
-	case r.Header.Get("Accept") == v1GeoJSON:
-		w.Header().Set("Content-Type", v1GeoJSON)
+	case r.Header.Get("Accept") == web.V1GeoJSON:
+		w.Header().Set("Content-Type", web.V1GeoJSON)
 		switch {
 		// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
 		case r.URL.Path == "/quake" &&
@@ -106,23 +106,23 @@ func router(w http.ResponseWriter, r *http.Request) {
 			serve(q, w, r)
 
 		default:
-			badRequest(w, r, "service not found.")
+			web.BadRequest(w, r, "service not found.")
 		}
 	// application/json;version=1
-	case r.Header.Get("Accept") == v1JSON:
-		w.Header().Set("Content-Type", v1JSON)
+	case r.Header.Get("Accept") == web.V1JSON:
+		w.Header().Set("Content-Type", web.V1JSON)
 		switch {
 		// /news/geonet
 		case r.RequestURI == "/news/geonet":
 			q := &newsQuery{}
 			serve(q, w, r)
 		default:
-			badRequest(w, r, "service not found.")
+			web.BadRequest(w, r, "service not found.")
 		}
 	// html documentation queries.
 	case htmlRe.MatchString(r.Header.Get("Accept")):
-		w.Header().Set("Content-Type", htmlHead)
-		w.Header().Set("Surrogate-Control", cacheMedium)
+		w.Header().Set("Content-Type", web.HtmlContent)
+		w.Header().Set("Surrogate-Control", web.MaxAge300)
 		switch {
 		case r.URL.Path == "/api-docs" || r.URL.Path == "/api-docs/" || r.URL.Path == "/api-docs/index.html":
 			q := &indexQuery{}
@@ -134,9 +134,9 @@ func router(w http.ResponseWriter, r *http.Request) {
 			}
 			serve(q, w, r)
 		default:
-			notFound(w, r, "page not found.")
+			web.NotFound(w, r, "page not found.")
 		}
 	default:
-		notAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+v1GeoJSON+" or "+v1JSON)
+		web.NotAcceptable(w, r, "Can't find a route for Accept header.  Try using: "+web.V1GeoJSON+" or "+web.V1JSON)
 	}
 }

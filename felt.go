@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"github.com/GeoNet/app/web"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -43,11 +44,11 @@ func (q *feltQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	// JSON for an invalid publicID.
 	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
 	if err == sql.ErrNoRows {
-		notFound(w, r, "invalid publicID: "+q.publicID)
+		web.NotFound(w, r, "invalid publicID: "+q.publicID)
 		return false
 	}
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 	return true
@@ -57,28 +58,28 @@ func (q *feltQuery) handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(feltURL + q.publicID + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
 	// Felt returns a 400 when it should probably be a 404.  Tapestry quirk?
 	switch {
 	case 200 == res.StatusCode:
-		ok(w, r, b)
+		web.Ok(w, r, &b)
 		return
 	case 4 == res.StatusCode/100:
-		notFound(w, r, string(b))
+		web.NotFound(w, r, string(b))
 		return
 	case 5 == res.StatusCode/500:
-		serviceUnavailable(w, r, errors.New("error proxying felt resports.  Shrug."))
+		web.ServiceUnavailable(w, r, errors.New("error proxying felt resports.  Shrug."))
 		return
 	}
 
-	serviceUnavailable(w, r, errors.New("unknown response from felt."))
+	web.ServiceUnavailable(w, r, errors.New("unknown response from felt."))
 }

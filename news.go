@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"github.com/GeoNet/app/web"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -99,29 +100,29 @@ func (q *newsQuery) handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
 	e, err := unmarshalNews(b)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
 	j, err := json.Marshal(e)
 	if err != nil {
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
 
-	w.Header().Set("Surrogate-Control", cacheMedium)
+	w.Header().Set("Surrogate-Control", web.MaxAge300)
 
-	ok(w, r, j)
+	web.Ok(w, r, &j)
 }

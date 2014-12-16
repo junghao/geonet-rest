@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/GeoNet/app/web"
 	"html/template"
 	"log"
 	"net/http"
@@ -357,10 +358,10 @@ func (q *indexQuery) handle(w http.ResponseWriter, r *http.Request) {
 	var b bytes.Buffer
 	if err := t.ExecuteTemplate(&b, "index", indexD); err != nil {
 		log.Println(err)
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	okBuf(w, r, &b)
+	web.OkBuf(w, r, &b)
 }
 
 var endpointQueryD = &doc{
@@ -373,7 +374,7 @@ type endpointQuery struct {
 
 func (q *endpointQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	if _, ok := endpoints[q.e]; !ok {
-		notFound(w, r, "page not found.")
+		web.NotFound(w, r, "page not found.")
 		return false
 	}
 	return true
@@ -383,10 +384,10 @@ func (q *endpointQuery) handle(w http.ResponseWriter, r *http.Request) {
 	var b bytes.Buffer
 	if err := t.ExecuteTemplate(&b, "endpoint", &endpointT{Header: headerD, Endpoint: endpoints[q.e], APIHost: apiHost}); err != nil {
 		log.Println(err)
-		serviceUnavailable(w, r, err)
+		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	okBuf(w, r, &b)
+	web.OkBuf(w, r, &b)
 }
 
 func (q *endpointQuery) doc() *doc {
