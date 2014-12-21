@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/GeoNet/app/web"
+	"github.com/GeoNet/app/web/api/apidoc"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -13,12 +14,20 @@ const (
 	feltURL = "http://felt.geonet.org.nz/services/reports/"
 )
 
-// /felt/report?publicID=2013p407387
+var feltDoc = apidoc.Endpoint{
+	Title:       "Felt",
+	Description: `Look up Felt Report information.`,
+	Queries: []*apidoc.Query{
+		new(feltQuery).Doc(),
+	},
+}
 
-var feltQueryD = &doc{
+var feltQueryD = &apidoc.Query{
+	Accept:      web.V1GeoJSON,
 	Title:       "Felt",
 	Description: "Look up Felt Report information about earthquakes",
 	Example:     "/felt/report?publicID=2013p407387",
+	ExampleHost: exHost,
 	URI:         "/felt/report?publicID=(publicID)",
 	Params: map[string]template.HTML{
 		"publicID": `a valid quake ID e.g., <code>2014p715167</code>`,
@@ -26,10 +35,9 @@ var feltQueryD = &doc{
 	Props: map[string]template.HTML{
 		"todo": `todo`,
 	},
-	Result: `todo`,
 }
 
-func (q *feltQuery) doc() *doc {
+func (q *feltQuery) Doc() *apidoc.Query {
 	return feltQueryD
 }
 
@@ -37,7 +45,7 @@ type feltQuery struct {
 	publicID string
 }
 
-func (q *feltQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+func (q *feltQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty
@@ -54,7 +62,7 @@ func (q *feltQuery) validate(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func (q *feltQuery) handle(w http.ResponseWriter, r *http.Request) {
+func (q *feltQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(feltURL + q.publicID + ".geojson")
 	defer res.Body.Close()
 	if err != nil {

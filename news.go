@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"github.com/GeoNet/app/web"
+	"github.com/GeoNet/app/web/api/apidoc"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,14 @@ const (
 	mlink   = "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId="
 	newsURL = "http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=conf_all&title=GeoNet+News+RSS+Feed&labelString%3D&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed"
 )
+
+var newsDoc = apidoc.Endpoint{
+	Title:       "News",
+	Description: `GeoNet news stories.`,
+	Queries: []*apidoc.Query{
+		new(newsQuery).Doc(),
+	},
+}
 
 // Feed is used for unmarshaling XML (from the GeoNet RSS news feed)
 // and marshaling JSON
@@ -56,10 +65,12 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 
 // /news/geonet
 
-var newsQueryD = &doc{
+var newsQueryD = &apidoc.Query{
+	Accept:      web.V1JSON,
 	Title:       "News",
 	Description: " Returns a simple JSON version of the GeoNet News RSS feed.",
 	Example:     "/news/geonet",
+	ExampleHost: exHost,
 	URI:         "/news/geonet",
 	Params: map[string]template.HTML{
 		"none": `no query parameters are requiresd.`,
@@ -70,33 +81,19 @@ var newsQueryD = &doc{
 		"published": "the date the story was published",
 		"title":     "the title of the story.",
 	},
-	Result: `{
-		"feed": [
-		{
-		"mlink": "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId=12222528",
-		"link": "http://info.geonet.org.nz/display/home/2014/11/26/GeoNet+News+Issue+20",
-		"published": "2014-11-25T22:00:01Z",
-		"title": "GeoNet News Issue 20"
-		},
-		{
-		"mlink": "http://info.geonet.org.nz/m/view-rendered-page.action?abstractPageId=12222520",
-		"link": "http://info.geonet.org.nz/display/appdata/2014/11/19/Run%2C+don%27t+walk+to+your+app+store%3A+GeoNet+Quake+app+upgrade+now+available",
-		"published": "2014-11-18T23:42:15Z",
-		"title": "Run, don't walk to your app store: GeoNet Quake app upgrade now available"
-		}]}`,
 }
 
-func (q *newsQuery) doc() *doc {
+func (q *newsQuery) Doc() *apidoc.Query {
 	return newsQueryD
 }
 
 type newsQuery struct{}
 
-func (q *newsQuery) validate(w http.ResponseWriter, r *http.Request) bool {
+func (q *newsQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func (q *newsQuery) handle(w http.ResponseWriter, r *http.Request) {
+func (q *newsQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
