@@ -4,15 +4,15 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/GeoNet/app/cfg",
-			"Rev": "5ce6ec7f140c225fbc7c6424ddcca6836e40efb0"
+			"Rev": "1578e609ddbd2e0ea2883297b31cf6d5a33fb368"
 		},
 		{
 			"ImportPath": "github.com/GeoNet/app/metrics",
-			"Rev": "5ce6ec7f140c225fbc7c6424ddcca6836e40efb0"
+			"Rev": "1578e609ddbd2e0ea2883297b31cf6d5a33fb368"
 		},
 		{
 			"ImportPath": "github.com/GeoNet/app/web",
-			"Rev": "5ce6ec7f140c225fbc7c6424ddcca6836e40efb0"
+			"Rev": "1578e609ddbd2e0ea2883297b31cf6d5a33fb368"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",

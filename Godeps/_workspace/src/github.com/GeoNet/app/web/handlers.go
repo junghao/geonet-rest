@@ -102,6 +102,17 @@ func NotFound(w http.ResponseWriter, r *http.Request, message string) {
 	http.Error(w, message, http.StatusNotFound)
 }
 
+// NotFoundPage (404) - returns a 404 html error page.
+// Whatever the client was looking for we haven't got it.
+func NotFoundPage(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.RequestURI + " 404")
+	res.Add("4xx", 1)
+	w.Header().Set("Cache-Control", MaxAge10)
+	w.Header().Set("Surrogate-Control", MaxAge10)
+	w.WriteHeader(http.StatusNotFound)
+	w.Write(error404)
+}
+
 // NotAcceptable (406) - the client requested content we don't know how to
 // generate. The message should suggest content types that can be created.
 func NotAcceptable(w http.ResponseWriter, r *http.Request, message string) {
@@ -123,12 +134,21 @@ func BadRequest(w http.ResponseWriter, r *http.Request, message string) {
 	http.Error(w, message, http.StatusBadRequest)
 }
 
-// ServiceUnavailable (500) - some sort of internal server error.
+// ServiceUnavailable (503) - some sort of internal server error.
 func ServiceUnavailable(w http.ResponseWriter, r *http.Request, err error) {
-	log.Println(r.RequestURI + " 500")
+	log.Println(r.RequestURI + " 503")
 	log.Printf("ERROR %s", err)
 	res.Add("5xx", 1)
 	http.Error(w, "Sad trombone.  Something went wrong and for that we are very sorry.  Please try again in a few minutes.", http.StatusServiceUnavailable)
+}
+
+// ServiceUnavailablePage (500) - returns a 500 error page.
+func ServiceUnavailablePage(w http.ResponseWriter, r *http.Request, err error) {
+	log.Println(r.RequestURI + " 503")
+	log.Printf("ERROR %s", err)
+	res.Add("5xx", 1)
+	w.WriteHeader(http.StatusServiceUnavailable)
+	w.Write(error503)
 }
 
 // GetAPI creates an http handler that only responds to http GET requests.  All other methods are an error.
