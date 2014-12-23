@@ -73,7 +73,7 @@ var newsQueryD = &apidoc.Query{
 	ExampleHost: exHost,
 	URI:         "/news/geonet",
 	Params: map[string]template.HTML{
-		"none": `no query parameters are requiresd.`,
+		"none": `no query parameters are required.`,
 	},
 	Props: map[string]template.HTML{
 		"mlink":     "a link to a mobile version of the news story.",
