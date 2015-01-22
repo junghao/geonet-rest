@@ -16,7 +16,7 @@ install -D -m 0755 geonet-rest ${buildroot}/usr/bin/geonet-rest
 install -D -m 0755 geonet-rest.init ${buildroot}/etc/rc.d/init.d/geonet-rest
 install -D -m 0644 geonet-rest.json ${buildroot}/etc/sysconfig/geonet-rest.json
 
-cp -a README.md api-docs ${buildroot}
+cp -a README.md ${buildroot}
 
 # Convert git log to RPM's ChangeLog format (shown with rpm -qp --changelog <rpm file>)
 cp geonet-rest.spec $topdir/SPECS/geonet-rest.spec

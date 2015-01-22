@@ -84,7 +84,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc README.md api-docs
+%doc README.md
 %config(noreplace) %{_sysconfdir}/sysconfig/geonet-rest.json
 %attr(755,root,root) %{_bindir}/geonet-rest
 %attr(755,root,root) %{_initrddir}/geonet-rest
