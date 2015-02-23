@@ -19,8 +19,8 @@ import (
 )
 
 var docs = apidoc.Docs{
-	Production: config.Production,
-	APIHost:    `api.geonet.org.nz`,
+	Production: config.WebServer.Production,
+	APIHost:    config.WebServer.CNAME,
 	Title:      `GeoNet API`,
 	Description: `<p>The data provided here is used for the GeoNet web site and other similar services. 
 			If you are looking for data for research or other purposes then please check the 
@@ -43,7 +43,7 @@ const (
 	regionLen = 8 // len("/region/")
 )
 
-var exHost = "http://localhost:" + config.Server.Port
+var exHost = "http://localhost:" + config.WebServer.Port
 
 // regexp for request routing.
 var (

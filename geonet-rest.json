@@ -6,12 +6,22 @@
 		"Password": "test",
 		"MaxOpenConns": 30, 
 		"MaxIdleConns": 20,
-		"Host": "localhost",
 		"ConnectionTimeOut": 5,
 		"SSLMode": "disable"
 	},
-	"Server": {
-		"Port": "8080"
+	"WebServer": {
+		"Port": "8080",
+		"CNAME": "localhost",
+		"Production": false
 	},
-	"Production": false
+	"Env": {
+		"Prefix": "GEONET_REST"
+	} ,
+	"Librato": {
+		"User": "XXX",
+		"Key": "XXX"
+	},
+	"Logentries": {
+		"Token": "XXX"
+	}
 }

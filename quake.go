@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 var quakeDoc = apidoc.Endpoint{Title: "Quake",
@@ -83,7 +82,6 @@ func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
@@ -109,7 +107,6 @@ func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakeV1")
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
@@ -176,7 +173,6 @@ func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) boo
 func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
@@ -203,7 +199,6 @@ func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakeRegionV1")
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
@@ -270,7 +265,6 @@ func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
@@ -297,8 +291,6 @@ func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakesV1")
-
 	b := []byte(d)
 	web.Ok(w, r, &b)
 }

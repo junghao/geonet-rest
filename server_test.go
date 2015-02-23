@@ -13,7 +13,7 @@ var ts *httptest.Server
 // setup starts a db connection and test server then inits an http client.
 func setup() {
 	var err error
-	db, err = sql.Open("postgres", config.Postgres())
+	db, err = sql.Open("postgres", config.DataBase.Postgres())
 	if err != nil {
 		log.Fatal(err)
 	}
