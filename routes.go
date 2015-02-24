@@ -49,7 +49,6 @@ var exHost = "http://localhost:" + config.WebServer.Port
 var (
 	quakeRe  = regexp.MustCompile(`^/quake/[0-9a-z]+$`)
 	regionRe = regexp.MustCompile(`^/region/[a-z]+$`)
-	feltRe   = regexp.MustCompile(`^/felt/report\?publicID=[0-9a-z]+$`)
 	htmlRe   = regexp.MustCompile(`html`)
 )
 
@@ -65,55 +64,29 @@ func router(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		switch {
 		// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" &&
-			len(r.URL.Query()) == 4 &&
-			r.URL.Query().Get("intensity") != "" &&
-			r.URL.Query().Get("regionID") != "" &&
-			r.URL.Query().Get("number") != "" &&
-			r.URL.Query().Get("quality") != "":
-			q := &quakesQuery{
-				number:    r.URL.Query().Get("number"),
-				regionID:  r.URL.Query().Get("regionID"),
-				intensity: r.URL.Query().Get("intensity"),
-				quality:   strings.Split(r.URL.Query().Get("quality"), ","),
-			}
+		case r.URL.Path == "/quake" && r.URL.Query().Get("intensity") != "":
+			q := &quakesQuery{}
 			api.Serve(q, w, r)
 		// /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" && len(r.URL.Query()) == 4 &&
-			r.URL.Query().Get("regionIntensity") != "" &&
-			r.URL.Query().Get("regionID") != "" &&
-			r.URL.Query().Get("number") != "" &&
-			r.URL.Query().Get("quality") != "":
-			q := &quakesRegionQuery{
-				number:          r.URL.Query().Get("number"),
-				regionID:        r.URL.Query().Get("regionID"),
-				regionIntensity: r.URL.Query().Get("regionIntensity"),
-				quality:         strings.Split(r.URL.Query().Get("quality"), ","),
-			}
+		case r.URL.Path == "/quake" && r.URL.Query().Get("regionIntensity") != "":
+			q := &quakesRegionQuery{}
 			api.Serve(q, w, r)
 		// /quake/2013p407387
 		case quakeRe.MatchString(r.RequestURI):
-			q := &quakeQuery{
-				publicID: r.URL.Path[quakeLen:],
-			}
+			q := &quakeQuery{}
 			api.Serve(q, w, r)
 		// /felt/report?publicID=2013p407387
-		case feltRe.MatchString(r.RequestURI):
-			q := &feltQuery{
-				publicID: r.URL.Query().Get("publicID"),
-			}
+		case r.URL.Path == "/felt/report":
+			q := &feltQuery{}
 			api.Serve(q, w, r)
 		// /region/wellington
 		case regionRe.MatchString(r.RequestURI):
-			q := &regionQuery{
-				regionID: r.URL.Path[regionLen:],
-			}
+			q := &regionQuery{}
 			api.Serve(q, w, r)
 		// /region?type=quake
 		case r.RequestURI == "/region?type=quake":
 			q := &regionsQuery{}
 			api.Serve(q, w, r)
-
 		default:
 			web.BadRequest(w, r, "service not found.")
 		}

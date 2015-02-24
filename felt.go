@@ -46,6 +46,16 @@ type feltQuery struct {
 }
 
 func (q *feltQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	switch {
+	case len(r.URL.Query()) != 1:
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	case !web.ParamsExist(w, r, "publicID"):
+		return false
+	}
+
+	q.publicID = r.URL.Query().Get("publicID")
+
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty

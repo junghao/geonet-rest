@@ -76,6 +76,8 @@ type regionQuery struct {
 }
 
 func (q *regionQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	q.regionID = r.URL.Path[regionLen:]
+
 	if _, ok := allRegion[q.regionID]; !ok {
 		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
 		return false

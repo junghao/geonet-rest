@@ -63,6 +63,8 @@ type quakeQuery struct {
 }
 
 func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	q.publicID = r.URL.Path[quakeLen:]
+
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the handle method will return empty
@@ -144,16 +146,24 @@ type quakesRegionQuery struct {
 }
 
 func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-
-	if !numberRe.MatchString(q.number) {
-		web.BadRequest(w, r, "Invalid number: "+q.number)
+	switch {
+	case len(r.URL.Query()) != 4:
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	case !web.ParamsExist(w, r, "number", "regionID", "regionIntensity", "quality"):
+		return false
+	case !numberRe.MatchString(r.URL.Query().Get("number")):
+		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
+		return false
+	case !intensityRe.MatchString(r.URL.Query().Get("regionIntensity")):
+		web.BadRequest(w, r, "Invalid regionIntensity: "+r.URL.Query().Get("regionIntensity"))
 		return false
 	}
 
-	if !intensityRe.MatchString(q.regionIntensity) {
-		web.BadRequest(w, r, "Invalid region intensity: "+q.regionIntensity)
-		return false
-	}
+	q.number = r.URL.Query().Get("number")
+	q.regionID = r.URL.Query().Get("regionID")
+	q.regionIntensity = r.URL.Query().Get("regionIntensity")
+	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
 
 	if _, ok := quakeRegion[q.regionID]; !ok {
 		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
@@ -236,16 +246,24 @@ type quakesQuery struct {
 }
 
 func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-
-	if !numberRe.MatchString(q.number) {
-		web.BadRequest(w, r, "Invalid number: "+q.number)
+	switch {
+	case len(r.URL.Query()) != 4:
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	case !web.ParamsExist(w, r, "number", "regionID", "intensity", "quality"):
+		return false
+	case !numberRe.MatchString(r.URL.Query().Get("number")):
+		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
+		return false
+	case !intensityRe.MatchString(r.URL.Query().Get("intensity")):
+		web.BadRequest(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
 		return false
 	}
 
-	if !intensityRe.MatchString(q.intensity) {
-		web.BadRequest(w, r, "Invalid intensity: "+q.intensity)
-		return false
-	}
+	q.number = r.URL.Query().Get("number")
+	q.regionID = r.URL.Query().Get("regionID")
+	q.intensity = r.URL.Query().Get("intensity")
+	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
 
 	if _, ok := quakeRegion[q.regionID]; !ok {
 		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
