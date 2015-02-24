@@ -10,6 +10,12 @@ import (
 	"strings"
 )
 
+// These constants are the length of parts of the URI and are used for
+// extracting query params embedded in the URI.
+const (
+	quakeLen = 7 //  len("/quake/")
+)
+
 var quakeDoc = apidoc.Endpoint{Title: "Quake",
 	Description: `Look up quake information.`,
 	Queries: []*apidoc.Query{
@@ -22,6 +28,7 @@ var quakeDoc = apidoc.Endpoint{Title: "Quake",
 var intensityRe = regexp.MustCompile(`^(unnoticeable|weak|light|moderate|strong|severe)$`)
 var numberRe = regexp.MustCompile(`^(3|30|100|500|1000|1500)$`)
 var qualityRe = regexp.MustCompile(`^(best|caution|deleted|good)$`)
+var publicIDRe = regexp.MustCompile(`^[0-9a-z]+$`)
 
 // all requests have the same properties in the return.
 // this is a map for all apidoc.Query{} structs.
@@ -63,7 +70,17 @@ type quakeQuery struct {
 }
 
 func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	if len(r.URL.Query()) != 0 {
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	}
+
 	q.publicID = r.URL.Path[quakeLen:]
+
+	if !publicIDRe.MatchString(q.publicID) {
+		web.BadRequest(w, r, "invalid publicID: "+q.publicID)
+		return false
+	}
 
 	var d string
 

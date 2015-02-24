@@ -14,7 +14,6 @@ import (
 	"github.com/GeoNet/app/web/api"
 	"github.com/GeoNet/app/web/api/apidoc"
 	"net/http"
-	"regexp"
 	"strings"
 )
 
@@ -36,26 +35,8 @@ func init() {
 	docs.AddEndpoint("news", &newsDoc)
 }
 
-// These constants are the length of parts of the URI and are used for
-// extracting query params embedded in the URI.
-const (
-	quakeLen  = 7 //  len("/quake/")
-	regionLen = 8 // len("/region/")
-)
-
 var exHost = "http://localhost:" + config.WebServer.Port
 
-// regexp for request routing.
-var (
-	quakeRe = regexp.MustCompile(`^/quake/[0-9a-z]+$`)
-	htmlRe  = regexp.MustCompile(`html`)
-)
-
-// router matches, validates, and serves http requests.
-// Favour string equality over regexp when possible (performance).
-// If you match on r.URL.Path you will have to check the length of r.URL.Query as well (prevent cache busters).
-// If you can match r.RequestURI this will not be necessary.
-// Put popular requests at the top of any switch.
 func router(w http.ResponseWriter, r *http.Request) {
 	switch {
 	// application/vnd.geo+json;version=1
@@ -71,7 +52,7 @@ func router(w http.ResponseWriter, r *http.Request) {
 			q := &quakesRegionQuery{}
 			api.Serve(q, w, r)
 		// /quake/2013p407387
-		case quakeRe.MatchString(r.RequestURI):
+		case strings.HasPrefix(r.URL.Path, "/quake/"):
 			q := &quakeQuery{}
 			api.Serve(q, w, r)
 		// /felt/report?publicID=2013p407387
@@ -94,7 +75,7 @@ func router(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", web.V1JSON)
 		switch {
 		// /news/geonet
-		case r.RequestURI == "/news/geonet":
+		case r.URL.Path == "/news/geonet":
 			q := &newsQuery{}
 			api.Serve(q, w, r)
 		default:

@@ -8,6 +8,12 @@ import (
 	"net/http"
 )
 
+// These constants are the length of parts of the URI and are used for
+// extracting query params embedded in the URI.
+const (
+	regionLen = 8 // len("/region/")
+)
+
 var regionDoc = apidoc.Endpoint{
 	Title:       "Region",
 	Description: `Look up region information.`,
