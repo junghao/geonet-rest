@@ -115,7 +115,6 @@ func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-
 var quakesRegionQueryD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Quakes Possibly Felt in a Region",
@@ -165,8 +164,14 @@ func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) boo
 	q.regionIntensity = r.URL.Query().Get("regionIntensity")
 	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
 
-	if _, ok := quakeRegion[q.regionID]; !ok {
-		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
+	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
+		return false
+	}
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 
@@ -265,8 +270,14 @@ func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 	q.intensity = r.URL.Query().Get("intensity")
 	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
 
-	if _, ok := quakeRegion[q.regionID]; !ok {
-		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
+	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
+		return false
+	}
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 

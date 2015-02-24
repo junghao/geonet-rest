@@ -67,6 +67,19 @@ func TestRoutes(t *testing.T) {
 	r.Add("/quake?regionID=canterbury&intensity=unnoticeable&number=3&quality=best,caution,good")
 	r.Add("/quake?regionID=fiordland&intensity=unnoticeable&number=3&quality=best,caution,good")
 	r.Add("/quake?regionID=otagosouthland&intensity=unnoticeable&number=3&quality=best,caution,good")
+
+	r.Test(ts, t)
+
+	// GeoJSON routes with long cache times
+	r = webtest.Route{
+		Accept:     web.V1GeoJSON,
+		Content:    web.V1GeoJSON,
+		Cache:      web.MaxAge10,
+		Surrogate:  web.MaxAge86400,
+		Response:   http.StatusOK,
+		Vary:       "Accept",
+		TestAccept: true,
+	}
 	r.Add("/region/newzealand")
 	r.Add("/region/aucklandnorthland")
 	r.Add("/region/tongagrirobayofplenty")

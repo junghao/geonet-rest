@@ -47,9 +47,8 @@ var exHost = "http://localhost:" + config.WebServer.Port
 
 // regexp for request routing.
 var (
-	quakeRe  = regexp.MustCompile(`^/quake/[0-9a-z]+$`)
-	regionRe = regexp.MustCompile(`^/region/[a-z]+$`)
-	htmlRe   = regexp.MustCompile(`html`)
+	quakeRe = regexp.MustCompile(`^/quake/[0-9a-z]+$`)
+	htmlRe  = regexp.MustCompile(`html`)
 )
 
 // router matches, validates, and serves http requests.
@@ -80,11 +79,11 @@ func router(w http.ResponseWriter, r *http.Request) {
 			q := &feltQuery{}
 			api.Serve(q, w, r)
 		// /region/wellington
-		case regionRe.MatchString(r.RequestURI):
+		case strings.HasPrefix(r.URL.Path, "/region/"):
 			q := &regionQuery{}
 			api.Serve(q, w, r)
 		// /region?type=quake
-		case r.RequestURI == "/region?type=quake":
+		case r.URL.Path == "/region":
 			q := &regionsQuery{}
 			api.Serve(q, w, r)
 		default:

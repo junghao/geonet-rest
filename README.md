@@ -93,8 +93,7 @@ Expvar is used to expose counters at http://.../debug/vars.  As well as the Go m
 
 Fatal application errors, 4xx and 5xx requests are syslogged.
 
-### Lookups.
+### Regions
 
-Some database tables change very rarely e.g., regions.  The data for these is loaded on startup and then cached.
-If a new region is added to the database or a region changed then the geonet-rest application will need to be 
-restarted to pick up the changes.
+Regions change very rarely and are served with a long surrogate cache time.  If the regions are changed the regions will need to be
+purged from CDN.
