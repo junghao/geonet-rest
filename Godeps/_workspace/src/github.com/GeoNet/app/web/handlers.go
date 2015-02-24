@@ -165,6 +165,29 @@ func ServiceUnavailablePage(w http.ResponseWriter, r *http.Request, err error) {
 	w.Write(error503)
 }
 
+// ParamsExist checks that all the params exist as non empty URL query parameters.
+// If they do not it writes a web.BadRequest with error message to w and returns false.
+func ParamsExist(w http.ResponseWriter, r *http.Request, params ...string) bool {
+	var missing []string
+	for _, p := range params {
+		if r.URL.Query().Get(p) == "" {
+			missing = append(missing, p)
+
+		}
+	}
+
+	switch len(missing) {
+	case 0:
+		return true
+	case 1:
+		BadRequest(w, r, "missing query parameter: "+missing[0])
+		return false
+	default:
+		BadRequest(w, r, "missing query parameters: "+strings.Join(missing, ", "))
+		return false
+	}
+}
+
 // GetAPI creates an http handler that only responds to http GET requests.  All other methods are an error.
 // Sets default Cache-Control and Surrogate-Control headers.
 // Sets the Vary header to Accept for use with REST APIs and upstream caching.
