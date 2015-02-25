@@ -71,6 +71,8 @@ Copy an appropriately edited version of `geonet-rest.json` to `/etc/sysconfig/ge
 
 ### Monitoring
 
+A state of health page is available at http:/.../soh  This will return a 500 error if any HeartBeat messages in the DB are old.
+
 Expvar is used to expose counters at http://.../debug/vars.  As well as the Go memstats counters there are counters for resquests and responses e.g.,
 
 ```

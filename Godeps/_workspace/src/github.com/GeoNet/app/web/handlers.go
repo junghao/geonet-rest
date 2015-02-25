@@ -156,13 +156,21 @@ func ServiceUnavailable(w http.ResponseWriter, r *http.Request, err error) {
 	http.Error(w, "Sad trombone.  Something went wrong and for that we are very sorry.  Please try again in a few minutes.", http.StatusServiceUnavailable)
 }
 
-// ServiceUnavailablePage (500) - returns a 500 error page.
+// ServiceUnavailablePage (503) - returns a 503 error page.
 func ServiceUnavailablePage(w http.ResponseWriter, r *http.Request, err error) {
 	log.Println(r.RequestURI + " 503")
 	log.Printf("ERROR %s", err)
 	mtr.r5xx.Inc()
 	w.WriteHeader(http.StatusServiceUnavailable)
 	w.Write(error503)
+}
+
+// ServiceInternalServerError - writes the content of b to w along with a 500 error.
+func ServiceInternalServerErrorBuf(w http.ResponseWriter, r *http.Request, b *bytes.Buffer) {
+	log.Println(r.RequestURI + " 500")
+	mtr.r5xx.Inc()
+	w.WriteHeader(http.StatusInternalServerError)
+	b.WriteTo(w)
 }
 
 // ParamsExist checks that all the params exist as non empty URL query parameters.

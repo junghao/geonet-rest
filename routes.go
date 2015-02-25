@@ -84,6 +84,8 @@ func router(w http.ResponseWriter, r *http.Request) {
 	// api-doc queries.
 	case strings.HasPrefix(r.URL.Path, apidoc.Path):
 		docs.Serve(w, r)
+	case r.URL.Path == "/soh":
+		soh(w, r)
 	default:
 		web.NotAcceptable(w, r, "Can't find a route for Accept header. Please refer to /api-docs")
 	}
