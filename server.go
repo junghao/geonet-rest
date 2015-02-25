@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//go:generate configer geonet-rest.json
 var (
 	config = cfg.Load()
 	db     *sql.DB
