@@ -45,6 +45,8 @@ psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-regio
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-region-values.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-views.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-soh.ddl
+psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/impact-create.ddl
+psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/impact-functions.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/user-permissions.ddl
 #
 # Event test data.
@@ -55,3 +57,4 @@ psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/user-perm
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/event-test-data.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/event-date-change.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/soh-test-data.ddl
+psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/impact-test-data.ddl

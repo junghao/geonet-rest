@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/GeoNet/app/web"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -17,10 +18,7 @@ table tr.error {background-color: #FF0000;}
 const foot = "</body></html>"
 
 var (
-	s    string
-	t    time.Time
-	old  time.Duration
-	meas int
+	old time.Duration
 )
 
 func init() {
@@ -36,11 +34,13 @@ func soh(w http.ResponseWriter, r *http.Request) {
 	b.Write([]byte(`<p>Current time is: ` + time.Now().UTC().String() + `</p>`))
 	b.Write([]byte(`<h3>Messaging</h3>`))
 
-	rows, err := db.Query("select serverid, timereceived from qrt.soh")
-
 	var bad bool
+	var s string
+	var t time.Time
 
 	b.Write([]byte(`<table><tr><th>Service</th><th>Time Received</th></tr>`))
+
+	rows, err := db.Query("select serverid, timereceived from qrt.soh")
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -59,6 +59,44 @@ func soh(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		rows.Close()
+	} else {
+		bad = true
+		b.Write([]byte(`<tr class="tr error"><td>DB error</td><td>` + err.Error() + `</td></tr>`))
+	}
+	b.Write([]byte(`</table>`))
+
+	b.Write([]byte(foot))
+
+	if bad {
+		web.ServiceInternalServerErrorBuf(w, r, &b)
+		return
+	}
+
+	web.OkBuf(w, r, &b)
+}
+
+// returns a simple state of health page.  If the count of measured intensities falls below 50 this it also returns an http status of 500.
+func impactSOH(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", web.HtmlContent)
+	var b bytes.Buffer
+
+	b.Write([]byte(head))
+	b.Write([]byte(`<p>Current time is: ` + time.Now().UTC().String() + `</p>`))
+	b.Write([]byte(`<h3>Impact</h3>`))
+
+	var bad bool
+
+	b.Write([]byte(`<table><tr><th>Impact</th><th>Count</th></tr>`))
+
+	var meas int
+	err := db.QueryRow("select count(*) from impact.intensity_measured").Scan(&meas)
+	if err == nil {
+		if meas < 50 {
+			bad = true
+			b.Write([]byte(`<tr class="tr error"><td>shaking measured</td><td>` + strconv.Itoa(meas) + ` < 50</td></tr>`))
+		} else {
+			b.Write([]byte(`<tr><td>shaking measured</td><td>` + strconv.Itoa(meas) + ` >= 50</td></tr>`))
+		}
 	} else {
 		bad = true
 		b.Write([]byte(`<tr class="tr error"><td>DB error</td><td>` + err.Error() + `</td></tr>`))

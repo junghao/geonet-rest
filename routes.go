@@ -33,6 +33,7 @@ func init() {
 	docs.AddEndpoint("region", &regionDoc)
 	docs.AddEndpoint("felt", &feltDoc)
 	docs.AddEndpoint("news", &newsDoc)
+	docs.AddEndpoint("impact", &impactDoc)
 }
 
 var exHost = "http://localhost:" + config.WebServer.Port
@@ -43,18 +44,40 @@ func router(w http.ResponseWriter, r *http.Request) {
 	case r.Header.Get("Accept") == web.V1GeoJSON:
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		switch {
-		// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" && r.URL.Query().Get("intensity") != "":
-			q := &quakesQuery{}
-			api.Serve(q, w, r)
-		// /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-		case r.URL.Path == "/quake" && r.URL.Query().Get("regionIntensity") != "":
-			q := &quakesRegionQuery{}
-			api.Serve(q, w, r)
-		// /quake/2013p407387
-		case strings.HasPrefix(r.URL.Path, "/quake/"):
-			q := &quakeQuery{}
-			api.Serve(q, w, r)
+		case strings.HasPrefix(r.URL.Path, "/quake"):
+			switch {
+			// /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
+			case r.URL.Query().Get("intensity") != "":
+				q := &quakesQuery{}
+				api.Serve(q, w, r)
+			// /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
+			case r.URL.Query().Get("regionIntensity") != "":
+				q := &quakesRegionQuery{}
+				api.Serve(q, w, r)
+			// /quake/2013p407387
+			case strings.HasPrefix(r.URL.Path, "/quake/"):
+				q := &quakeQuery{}
+				api.Serve(q, w, r)
+			default:
+				web.BadRequest(w, r, "service not found.")
+			}
+		case r.URL.Path == "/intensity":
+			switch {
+			// /intensity?type=measured
+			case r.URL.Query().Get("type") == "measured":
+				q := &intensityMeasuredLatestQuery{}
+				api.Serve(q, w, r)
+			// /intensity?type=reported&bbox=165,-34,179,-47&zoom=5
+			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("start") == "":
+				q := &intensityReportedLatestQuery{}
+				api.Serve(q, w, r)
+			// /intensity?type=reported&bbox=165,-34,179,-47&start=2014-01-08T12:00:00Z&window=15&zoom=5
+			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("start") != "":
+				q := &intensityReportedQuery{}
+				api.Serve(q, w, r)
+			default:
+				web.BadRequest(w, r, "service not found.")
+			}
 		// /felt/report?publicID=2013p407387
 		case r.URL.Path == "/felt/report":
 			q := &feltQuery{}
@@ -86,6 +109,8 @@ func router(w http.ResponseWriter, r *http.Request) {
 		docs.Serve(w, r)
 	case r.URL.Path == "/soh":
 		soh(w, r)
+	case r.URL.Path == "/soh/impact":
+		impactSOH(w, r)
 	default:
 		web.NotAcceptable(w, r, "Can't find a route for Accept header. Please refer to /api-docs")
 	}
