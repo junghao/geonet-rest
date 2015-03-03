@@ -89,10 +89,13 @@ purged from CDN.
 
 ### Database
 
+Use this procedure to sync a new DB.  It is best done without other processes writing to the DB.  Should this occur then manually 
+run the triggers afterwards for any new rows. 
+
 Dump all the quake data from a DB using:
 
 ```
-pg_dump -h 127.0.0.1 -a -U hazard_w -t qrt.event -t qrt.eventhistory -f dump hazard
+pg_dump -h 127.0.0.1 -a -U hazard_w -t qrt.event -t qrt.eventhistory -t qrt.quake_materialized -f dump hazard 
 ```
 
 edit the dump file and add `public` to the search path:
@@ -101,8 +104,12 @@ edit the dump file and add `public` to the search path:
 SET search_path = qrt, public, pg_catalog;
 ```
 
-The dump file can then be loaded like:
+Drop the triggers on qrt.event on the target DB (as geoneradmin) c.f., the ddl.
+
+Load the dump file:
 
 ```
 psql ... -f dump
 ```
+
+Reinstate the triggers.
