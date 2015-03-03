@@ -90,6 +90,11 @@ func (q *newsQuery) Doc() *apidoc.Query {
 type newsQuery struct{}
 
 func (q *newsQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	if len(r.URL.Query()) != 0 {
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	}
+
 	return true
 }
 

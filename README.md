@@ -55,46 +55,54 @@ API documentation is generated from doc{} structs in the code.  Run the applicat
 
 ### Database
 
-Uses the database from the geonet web project.
-
-This tutorial is very useful for database access with Go http://go-database-sql.org/
+Uses the database from the ddl dir.  Use `./scripts/init-db.sh` to initialise the DB in a suitable postgres+postgis container.
 
 ### Properties
 
-Properties are read from `/etc/sysconfig/geonet-rest.json` and if this is not found then from `./geonet-rest.json` (this should contain testing values)
+Either or both of: 
+1. Copy an appropriately edited version of `geonet-rest.json` to `/etc/sysconfig/geonet-rest.json`  This should include write access credentials for accessing the impact database.
+2. Refer to docker-run.sh for overriding from env var.
 
 ## Deployment
 
 ### Properties 
 
-Copy an appropriately edited version of `geonet-rest.json` to `/etc/sysconfig/geonet-rest.json`  This should include read only credentials for accessing the hazard database.
+Copy an appropriately edited version of `geonet-rest.json` to `/etc/sysconfig/geonet-rest.json`  This should include read only credentials for accessing the hazard database.  Properties can also be set from env var.
 
 ### Monitoring
 
-Expvar is used to expose counters at http://.../debug/vars.  As well as the Go memstats counters there are counters for resquests and responses e.g.,
+There are state of health pages available for montoring with web probes:
 
-```
-{
-  "responses": {
-    "5xx": 0,
-    "4xx": 1,
-    "2xx": 5001
-  },
-  "requests": 5002,
-  "memstats": {
-    "BySize": [
-      {
-        "Frees": 0,
-        "Mallocs": 0,
-        "Size": 0
-      },
-...
-```
+* http://.../soh - this will return a 500 error if any HeartBeat messages in the DB are old.
+* http://.../soh/impact - this will return a 500 error if the measured shaking intensity messages fall below 50.  Not all servers may be receiving these messages.
+
+### Logging and Metrics
+
+Can be sent to Logentries and Librato Metrics respectively by setting the appropriate credentials in the config.
 
 Fatal application errors, 4xx and 5xx requests are syslogged.
 
-### Lookups.
+### Regions
 
-Some database tables change very rarely e.g., regions.  The data for these is loaded on startup and then cached.
-If a new region is added to the database or a region changed then the geonet-rest application will need to be 
-restarted to pick up the changes.
+Regions change very rarely and are served with a long surrogate cache time.  If the regions are changed the regions will need to be
+purged from CDN.
+
+### Database
+
+Dump all the quake data from a DB using:
+
+```
+pg_dump -h 127.0.0.1 -a -U hazard_w -t qrt.event -t qrt.eventhistory -f dump hazard
+```
+
+edit the dump file and add `public` to the search path:
+
+```
+SET search_path = qrt, public, pg_catalog;
+```
+
+The dump file can then be loaded like:
+
+```
+psql ... -f dump
+```

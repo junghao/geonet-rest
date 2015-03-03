@@ -8,7 +8,12 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
+)
+
+// These constants are the length of parts of the URI and are used for
+// extracting query params embedded in the URI.
+const (
+	quakeLen = 7 //  len("/quake/")
 )
 
 var quakeDoc = apidoc.Endpoint{Title: "Quake",
@@ -23,6 +28,7 @@ var quakeDoc = apidoc.Endpoint{Title: "Quake",
 var intensityRe = regexp.MustCompile(`^(unnoticeable|weak|light|moderate|strong|severe)$`)
 var numberRe = regexp.MustCompile(`^(3|30|100|500|1000|1500)$`)
 var qualityRe = regexp.MustCompile(`^(best|caution|deleted|good)$`)
+var publicIDRe = regexp.MustCompile(`^[0-9a-z]+$`)
 
 // all requests have the same properties in the return.
 // this is a map for all apidoc.Query{} structs.
@@ -64,6 +70,18 @@ type quakeQuery struct {
 }
 
 func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+	if len(r.URL.Query()) != 0 {
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	}
+
+	q.publicID = r.URL.Path[quakeLen:]
+
+	if !publicIDRe.MatchString(q.publicID) {
+		web.BadRequest(w, r, "invalid publicID: "+q.publicID)
+		return false
+	}
+
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the handle method will return empty
@@ -83,7 +101,6 @@ func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
@@ -109,14 +126,12 @@ func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakeV1")
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
 }
 
 // /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-
 var quakesRegionQueryD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Quakes Possibly Felt in a Region",
@@ -147,19 +162,33 @@ type quakesRegionQuery struct {
 }
 
 func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-
-	if !numberRe.MatchString(q.number) {
-		web.BadRequest(w, r, "Invalid number: "+q.number)
+	switch {
+	case len(r.URL.Query()) != 4:
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	case !web.ParamsExist(w, r, "number", "regionID", "regionIntensity", "quality"):
+		return false
+	case !numberRe.MatchString(r.URL.Query().Get("number")):
+		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
+		return false
+	case !intensityRe.MatchString(r.URL.Query().Get("regionIntensity")):
+		web.BadRequest(w, r, "Invalid regionIntensity: "+r.URL.Query().Get("regionIntensity"))
 		return false
 	}
 
-	if !intensityRe.MatchString(q.regionIntensity) {
-		web.BadRequest(w, r, "Invalid region intensity: "+q.regionIntensity)
+	q.number = r.URL.Query().Get("number")
+	q.regionID = r.URL.Query().Get("regionID")
+	q.regionIntensity = r.URL.Query().Get("regionIntensity")
+	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
+
+	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
 		return false
 	}
-
-	if _, ok := quakeRegion[q.regionID]; !ok {
-		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 
@@ -176,7 +205,6 @@ func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) boo
 func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
@@ -203,7 +231,6 @@ func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakeRegionV1")
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
@@ -241,19 +268,33 @@ type quakesQuery struct {
 }
 
 func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-
-	if !numberRe.MatchString(q.number) {
-		web.BadRequest(w, r, "Invalid number: "+q.number)
+	switch {
+	case len(r.URL.Query()) != 4:
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return false
+	case !web.ParamsExist(w, r, "number", "regionID", "intensity", "quality"):
+		return false
+	case !numberRe.MatchString(r.URL.Query().Get("number")):
+		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
+		return false
+	case !intensityRe.MatchString(r.URL.Query().Get("intensity")):
+		web.BadRequest(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
 		return false
 	}
 
-	if !intensityRe.MatchString(q.intensity) {
-		web.BadRequest(w, r, "Invalid intensity: "+q.intensity)
+	q.number = r.URL.Query().Get("number")
+	q.regionID = r.URL.Query().Get("regionID")
+	q.intensity = r.URL.Query().Get("intensity")
+	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
+
+	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
 		return false
 	}
-
-	if _, ok := quakeRegion[q.regionID]; !ok {
-		web.BadRequest(w, r, "Invalid regionID: "+q.regionID)
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
 		return false
 	}
 
@@ -270,7 +311,6 @@ func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
 func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
-	start := time.Now()
 	err := db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
@@ -297,8 +337,6 @@ func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
 		web.ServiceUnavailable(w, r, err)
 		return
 	}
-	web.DBTime.Track(start, "DB quakesV1")
-
 	b := []byte(d)
 	web.Ok(w, r, &b)
 }

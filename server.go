@@ -10,10 +10,11 @@ import (
 	"time"
 )
 
+//go:generate configer geonet-rest.json
 var (
-	config = cfg.Load("geonet-rest") // this will be loaded before all init() func are called.
-	db     *sql.DB                   // shared DB connection pool
-	client *http.Client              // shared http client
+	config = cfg.Load()
+	db     *sql.DB
+	client *http.Client
 )
 
 var header = web.Header{
@@ -25,7 +26,7 @@ var header = web.Header{
 // main connects to the database, sets up request routing, and starts the http server.
 func main() {
 	var err error
-	db, err = sql.Open("postgres", config.Postgres())
+	db, err = sql.Open("postgres", config.DataBase.Postgres())
 	if err != nil {
 		log.Println("Problem with DB config.")
 		log.Fatal(err)
@@ -46,7 +47,7 @@ func main() {
 	}
 
 	http.Handle("/", handler())
-	log.Fatal(http.ListenAndServe(":"+config.Server.Port, nil))
+	log.Fatal(http.ListenAndServe(":"+config.WebServer.Port, nil))
 }
 
 // handler creates a mux and wraps it with default handlers.  Seperate function to enable testing.
