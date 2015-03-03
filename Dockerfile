@@ -1,12 +1,10 @@
 FROM quay.io/geonet/golang-godep:latest
 
-RUN apt-get update 
-
-RUN go get github.com/GeoNet/geonet-rest
+COPY . /go/src/github.com/GeoNet/geonet-rest
 
 WORKDIR /go/src/github.com/GeoNet/geonet-rest
 
-RUN godep go install
+RUN godep go install -a
 
 EXPOSE 8080
 

@@ -1,0 +1,16 @@
+.git
+.gitignore
+Dockerrun.aws.json
+geonet-rest
+ddl
+scripts
+README*
+etc
+prod
+*_test.go
+*test.json
+geonet-rest.spec
+geonet-rest.init
+rpmbuild.sh
+rpmsign.rb
+docker-run.sh
