@@ -86,3 +86,23 @@ Fatal application errors, 4xx and 5xx requests are syslogged.
 
 Regions change very rarely and are served with a long surrogate cache time.  If the regions are changed the regions will need to be
 purged from CDN.
+
+### Database
+
+Dump all the quake data from a DB using:
+
+```
+pg_dump -h 127.0.0.1 -a -U hazard_w -t qrt.event -t qrt.eventhistory -f dump hazard
+```
+
+edit the dump file and add `public` to the search path:
+
+```
+SET search_path = qrt, public, pg_catalog;
+```
+
+The dump file can then be loaded like:
+
+```
+psql ... -f dump
+```
