@@ -26,7 +26,7 @@ var header = web.Header{
 
 func init() {
 	logentries.Init(config.Logentries.Token)
-	msg.InitLibrato(config.Librato.User, config.Librato.Key)
+	web.InitLibrato(config.Librato.User, config.Librato.Key)
 }
 
 // main connects to the database, sets up request routing, and starts the http server.
