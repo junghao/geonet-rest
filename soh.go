@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"github.com/GeoNet/app/web"
+	"github.com/GeoNet/web"
 	"net/http"
 	"strconv"
 	"time"

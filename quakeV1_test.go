@@ -24,8 +24,8 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/GeoNet/app/web"
-	"github.com/GeoNet/app/web/webtest"
+	"github.com/GeoNet/web"
+	"github.com/GeoNet/web/webtest"
 	"log"
 	"testing"
 )

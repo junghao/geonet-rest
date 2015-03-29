@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/GeoNet/app/web"
-	"github.com/GeoNet/app/web/api/apidoc"
+	"github.com/GeoNet/web"
+	"github.com/GeoNet/web/api/apidoc"
 	"html/template"
 	"io/ioutil"
 	"net/http"

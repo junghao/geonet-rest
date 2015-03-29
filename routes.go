@@ -10,9 +10,9 @@ package main
 // 4. When you are ready to publish public html documentation for the query then add it's doc method to the appropriate endpoint documentation.
 
 import (
-	"github.com/GeoNet/app/web"
-	"github.com/GeoNet/app/web/api"
-	"github.com/GeoNet/app/web/api/apidoc"
+	"github.com/GeoNet/web"
+	"github.com/GeoNet/web/api"
+	"github.com/GeoNet/web/api/apidoc"
 	"net/http"
 	"strings"
 )
