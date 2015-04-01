@@ -33,7 +33,7 @@ func init() {
 	docs.AddEndpoint("region", &regionDoc)
 	docs.AddEndpoint("felt", &feltDoc)
 	docs.AddEndpoint("news", &newsDoc)
-	docs.AddEndpoint("impact", &impactDoc)
+	// docs.AddEndpoint("impact", &impactDoc)
 }
 
 var exHost = "http://localhost:" + config.WebServer.Port
