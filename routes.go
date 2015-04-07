@@ -67,12 +67,12 @@ func router(w http.ResponseWriter, r *http.Request) {
 			case r.URL.Query().Get("type") == "measured":
 				q := &intensityMeasuredLatestQuery{}
 				api.Serve(q, w, r)
-			// /intensity?type=reported&bbox=165,-34,179,-47&zoom=5
-			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("start") == "":
+			// /intensity?type=reported&zoom=5
+			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") == "":
 				q := &intensityReportedLatestQuery{}
 				api.Serve(q, w, r)
-			// /intensity?type=reported&bbox=165,-34,179,-47&start=2014-01-08T12:00:00Z&window=15&zoom=5
-			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("start") != "":
+			// /intensity?type=reported&zoom=5&publicID=2012p23456
+			case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") != "":
 				q := &intensityReportedQuery{}
 				api.Serve(q, w, r)
 			default:

@@ -68,8 +68,8 @@ func TestRoutes(t *testing.T) {
 	r.Add("/quake?regionID=fiordland&intensity=unnoticeable&number=3&quality=best,caution,good")
 	r.Add("/quake?regionID=otagosouthland&intensity=unnoticeable&number=3&quality=best,caution,good")
 	r.Add("/intensity?type=measured")
-	r.Add("/intensity?type=reported&bbox=165,-34,179,-47&zoom=5")
-	r.Add("/intensity?type=reported&bbox=165,-34,179,-47&start=2014-01-08T12:00:00Z&window=15&zoom=5")
+	r.Add("/intensity?type=reported&zoom=5")
+	r.Add("/intensity?type=reported&zoom=5&publicID=2012p673624")
 
 	r.Test(ts, t)
 
@@ -186,8 +186,8 @@ func TestGeoJSON(t *testing.T) {
 	r.Add("/region?type=quake")
 	r.Add("/felt/report?publicID=2013p407387")
 	r.Add("/intensity?type=measured")
-	r.Add("/intensity?type=reported&bbox=165,-34,179,-47&zoom=5")
-	r.Add("/intensity?type=reported&bbox=165,-34,179,-47&start=2014-01-08T12:00:00Z&window=15&zoom=5")
+	r.Add("/intensity?type=reported&zoom=5")
+	r.Add("/intensity?type=reported&zoom=5&publicID=2012p673624")
 
 	r.GeoJSON(ts, t)
 }

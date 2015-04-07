@@ -16,8 +16,8 @@ RETURN;
 END IF;
 
 BEGIN
-INSERT INTO impact.intensity_reported(source, time, mmi, comment, geohash5, geohash6, geohash7, location) 
-VALUES (source_n, time_n, mmi_n, comment_n, st_geohash(loc, 5), st_geohash(loc, 6), st_geohash(loc, 7), loc);
+INSERT INTO impact.intensity_reported(source, time, mmi, comment, geohash5, geohash6, location) 
+VALUES (source_n, time_n, mmi_n, comment_n, st_geohash(loc, 5), st_geohash(loc, 6), loc);
 RETURN;
 EXCEPTION WHEN unique_violation THEN
 --  Loop once more to see if a different insert happened after the update but before our insert.
