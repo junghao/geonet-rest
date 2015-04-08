@@ -11,12 +11,13 @@ CREATE TABLE impact.intensity_reported (
 	comment varchar(140) NOT NULL,
 	geohash5 varchar(5) NOT NULL,
 	geohash6 varchar(6) NOT NULL,
-	geohash7 varchar(7) NOT NULL,
 	location GEOGRAPHY(POINT, 4326) NOT NULL,
 	UNIQUE (source, time)
 );
 
 CREATE INDEX ON impact.intensity_reported (time);
+CREATE INDEX ON impact.intensity_reported (geohash5);
+CREATE INDEX ON impact.intensity_reported (geohash6);
 
 -- impact.intensity_measured is for measured shaking intensity.
 CREATE TABLE impact.intensity_measured (
