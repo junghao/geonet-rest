@@ -23,7 +23,7 @@ func init() {
 	docs.AddEndpoint("region", &regionDoc)
 	docs.AddEndpoint("felt", &feltDoc)
 	docs.AddEndpoint("news", &newsDoc)
-	// docs.AddEndpoint("impact", &impactDoc)
+	docs.AddEndpoint("impact", &impactDoc)
 }
 
 var exHost = "http://localhost:" + config.WebServer.Port
@@ -56,10 +56,10 @@ func router(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.URL.Query().Get("type") == "measured":
 			intensityMeasuredLatest(w, r)
-		case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") == "":
-			intensityReportedLatest(w, r)
-		case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") != "":
-			intensityReported(w, r)
+		// case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") == "":
+		// 	intensityReportedLatest(w, r)
+		// case r.URL.Query().Get("type") == "reported" && r.URL.Query().Get("publicID") != "":
+		// 	intensityReported(w, r)
 		default:
 			web.BadRequest(w, r, "Can't find a route for this request. Please refer to /api-docs")
 		}
