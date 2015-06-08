@@ -13,8 +13,8 @@ import (
 var impactDoc = apidoc.Endpoint{Title: "Impact",
 	Description: `Look up impact information`,
 	Queries: []*apidoc.Query{
-		intensityReportedD,
-		intensityReportedLatestD,
+		// intensityReportedD,
+		// intensityReportedLatestD,
 		intensityMeasuredLatestD,
 	},
 }
