@@ -115,7 +115,6 @@ func news(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Surrogate-Control", web.MaxAge300)
-	w.Header().Set("Content-Type", web.V1JSON)
 
 	web.Ok(w, r, &j)
 }
