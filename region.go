@@ -18,19 +18,19 @@ var regionDoc = apidoc.Endpoint{
 	Title:       "Region",
 	Description: `Look up region information.`,
 	Queries: []*apidoc.Query{
-		new(regionQuery).Doc(),
-		new(regionsQuery).Doc(),
+		regionsD,
+		regionD,
 	},
 }
 
-var regionsQueryD = &apidoc.Query{
+var regionsD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Regions",
 	Description: "Retrieve regions.",
 	Example:     "/region?type=quake",
 	ExampleHost: exHost,
 	URI:         "/region?type=(type)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		"type": `the region type.  The only allowable value is <code>quake</code>.`,
 	},
 	Props: map[string]template.HTML{
@@ -40,35 +40,18 @@ var regionsQueryD = &apidoc.Query{
 	},
 }
 
-func (q *regionsQuery) Doc() *apidoc.Query {
-	return regionsQueryD
-}
-
-type regionsQuery struct {
-	regionType string
-}
-
-func (q *regionsQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 1:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "type"):
-		return false
-	}
-
-	q.regionType = r.URL.Query().Get("type")
-
-	if q.regionType != "quake" {
-		web.BadRequest(w, r, "type must be quake.")
-		return false
-	}
-
-	return true
-}
-
 // just quake regions at the moment.
-func (q *regionsQuery) Handle(w http.ResponseWriter, r *http.Request) {
+func regions(w http.ResponseWriter, r *http.Request) {
+	if err := regionsD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
+	}
+
+	if r.URL.Query().Get("type") != "quake" {
+		web.BadRequest(w, r, "type must be quake.")
+		return
+	}
+
 	var d string
 
 	err := db.QueryRow(`SELECT row_to_json(fc)
@@ -96,14 +79,14 @@ func (q *regionsQuery) Handle(w http.ResponseWriter, r *http.Request) {
 
 // /region/wellington
 
-var regionQueryD = &apidoc.Query{
+var regionD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Region",
 	Description: "Retrieve a single region.",
 	Example:     "/region/wellington",
 	ExampleHost: exHost,
 	URI:         "/region/(regionID)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		"regionID": `A region ID e.g., <code>wellington</code>.`,
 	},
 	Props: map[string]template.HTML{
@@ -113,40 +96,27 @@ var regionQueryD = &apidoc.Query{
 	},
 }
 
-func (q *regionQuery) Doc() *apidoc.Query {
-	return regionQueryD
-}
-
-type regionQuery struct {
-	regionID string
-}
-
-func (q *regionQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+func region(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.Query()) != 0 {
 		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
+		return
 	}
 
-	q.regionID = r.URL.Path[regionLen:]
+	regionID := r.URL.Path[regionLen:]
 
 	var d string
 
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1", q.regionID).Scan(&d)
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1", regionID).Scan(&d)
 	if err == sql.ErrNoRows {
-		web.BadRequest(w, r, "invalid regionID: "+q.regionID)
-		return false
+		web.BadRequest(w, r, "invalid regionID: "+regionID)
+		return
 	}
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
-		return false
+		return
 	}
-	return true
-}
 
-func (q *regionQuery) Handle(w http.ResponseWriter, r *http.Request) {
-	var d string
-
-	err := db.QueryRow(`SELECT row_to_json(fc)
+	err = db.QueryRow(`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
                          FROM (SELECT 'Feature' as type,
                          ST_AsGeoJSON(q.geom)::json as geometry,
@@ -157,7 +127,7 @@ func (q *regionQuery) Handle(w http.ResponseWriter, r *http.Request) {
                          		title, 
                          		groupname as group
                            ) as l
-                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, q.regionID).Scan(&d)
+                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, regionID).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return

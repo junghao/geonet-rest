@@ -19,9 +19,9 @@ const (
 var quakeDoc = apidoc.Endpoint{Title: "Quake",
 	Description: `Look up quake information.`,
 	Queries: []*apidoc.Query{
-		new(quakeQuery).Doc(),
-		new(quakesQuery).Doc(),
-		new(quakesRegionQuery).Doc(),
+		quakeD,
+		quakesD,
+		quakesRegionD,
 	},
 }
 
@@ -48,7 +48,7 @@ var propsD = map[string]template.HTML{
 
 // /quake/2013p407387
 
-var quakeQueryD = &apidoc.Query{
+var quakeD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Quake",
 	Description: "Information for a single quake.",
@@ -61,47 +61,35 @@ var quakeQueryD = &apidoc.Query{
 	Props: propsD,
 }
 
-func (q *quakeQuery) Doc() *apidoc.Query {
-	return quakeQueryD
-}
-
-type quakeQuery struct {
-	publicID string
-}
-
-func (q *quakeQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+func quake(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.Query()) != 0 {
 		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
+		return
 	}
 
-	q.publicID = r.URL.Path[quakeLen:]
+	publicID := r.URL.Path[quakeLen:]
 
-	if !publicIDRe.MatchString(q.publicID) {
-		web.BadRequest(w, r, "invalid publicID: "+q.publicID)
-		return false
+	// TODO bother with this?
+	if !publicIDRe.MatchString(publicID) {
+		web.BadRequest(w, r, "invalid publicID: "+publicID)
+		return
 	}
 
 	var d string
 
 	// Check that the publicid exists in the DB.  This is needed as the handle method will return empty
 	// JSON for an invalid publicID.
-	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
+	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
 	if err == sql.ErrNoRows {
-		web.NotFound(w, r, "invalid publicID: "+q.publicID)
-		return false
+		web.NotFound(w, r, "invalid publicID: "+publicID)
+		return
 	}
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
-		return false
+		return
 	}
-	return true
-}
 
-func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
-	var d string
-
-	err := db.QueryRow(
+	err = db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
                          FROM (SELECT 'Feature' as type,
@@ -121,7 +109,7 @@ func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
                                 qrt.quake_quality(status, usedphasecount, magnitudestationcount) as quality,
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, q.publicID).Scan(&d)
+                         )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, publicID).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -132,14 +120,14 @@ func (q *quakeQuery) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // /quake?regionID=newzealand&regionIntensity=unnoticeable&number=30&quality=best,caution,good
-var quakesRegionQueryD = &apidoc.Query{
+var quakesRegionD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Quakes Possibly Felt in a Region",
 	Description: "quakes possibly felt in a region during the last 365 days.",
 	Example:     "/quake?regionID=newzealand&regionIntensity=weak&number=3&quality=best,caution,good",
 	ExampleHost: exHost,
 	URI:         "/quake?regionID=(region)&regionIntensity=(intensity)&number=(n)&quality=(quality)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		`regionID`: `a valid quake region identifier e.g., <code>newzealand</code>.`,
 		`regionIntensity`: `the minimum intensity in the region e.g., <code>weak</code>.  
 		Must be one of <code>unnoticeable</code>, <code>weak</code>, <code>light</code>, 
@@ -152,60 +140,48 @@ var quakesRegionQueryD = &apidoc.Query{
 	Props: propsD,
 }
 
-func (q *quakesRegionQuery) Doc() *apidoc.Query {
-	return quakesRegionQueryD
-}
-
-type quakesRegionQuery struct {
-	regionID, regionIntensity, number string
-	quality                           []string
-}
-
-func (q *quakesRegionQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 4:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "number", "regionID", "regionIntensity", "quality"):
-		return false
-	case !numberRe.MatchString(r.URL.Query().Get("number")):
-		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
-		return false
-	case !intensityRe.MatchString(r.URL.Query().Get("regionIntensity")):
-		web.BadRequest(w, r, "Invalid regionIntensity: "+r.URL.Query().Get("regionIntensity"))
-		return false
+func quakesRegion(w http.ResponseWriter, r *http.Request) {
+	if err := quakesRegionD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	q.number = r.URL.Query().Get("number")
-	q.regionID = r.URL.Query().Get("regionID")
-	q.regionIntensity = r.URL.Query().Get("regionIntensity")
-	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
+	v := r.URL.Query()
 
-	var d string
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
-	if err == sql.ErrNoRows {
-		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
-		return false
-	}
-	if err != nil {
-		web.ServiceUnavailable(w, r, err)
-		return false
+	number := v.Get("number")
+	regionID := v.Get("regionID")
+	regionIntensity := v.Get("regionIntensity")
+	quality := strings.Split(v.Get("quality"), ",")
+
+	if !numberRe.MatchString(number) {
+		web.BadRequest(w, r, "Invalid query parameter number: "+number)
+		return
 	}
 
-	for _, q := range q.quality {
+	if !intensityRe.MatchString(regionIntensity) {
+		web.BadRequest(w, r, "Invalid regionIntensity: "+regionIntensity)
+		return
+	}
+
+	for _, q := range quality {
 		if !qualityRe.MatchString(q) {
 			web.BadRequest(w, r, "Invalid quality: "+q)
-			return false
+			return
 		}
 	}
 
-	return true
-}
-
-func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+regionID)
+		return
+	}
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
+		return
+	}
 
-	err := db.QueryRow(
+	err = db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
@@ -221,12 +197,12 @@ func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
                                 agency,
                                 locality,
                                 intensity,
-                                intensity_`+q.regionID+` as "regionIntensity",
+                                intensity_`+regionID+` as "regionIntensity",
                                 quality,
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+q.regionID+` >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(q.quality, `','`)+`') limit $2 ) as f ) as fc`, q.regionIntensity, q.number).Scan(&d)
+                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+regionID+` >= qrt.intensity_to_mmi($1)
+                         AND quality in ('`+strings.Join(quality, `','`)+`') limit $2 ) as f ) as fc`, regionIntensity, number).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -238,14 +214,14 @@ func (q *quakesRegionQuery) Handle(w http.ResponseWriter, r *http.Request) {
 
 // /quake?regionID=newzealand&intensity=unnoticeable&number=30&quality=best,caution,good
 
-var quakesQueryD = &apidoc.Query{
+var quakesD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Quakes in a Region",
 	Description: "quakes in a region during the last 365 days.",
 	Example:     "/quake?regionID=newzealand&intensity=weak&number=3&quality=best,caution,good",
 	ExampleHost: exHost,
 	URI:         " /quake?regionID=(region)&intensity=(intensity)&number=(n)&quality=(quality)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		`regionID`: `a valid quake region identifier e.g., <code>newzealand</code>.`,
 		`intensity`: `the minimum intensity at the epicenter e.g., <code>weak</code>.  
 		Must be one of <code>unnoticeable</code>, <code>weak</code>, <code>light</code>, 
@@ -258,60 +234,48 @@ var quakesQueryD = &apidoc.Query{
 	Props: propsD,
 }
 
-func (q *quakesQuery) Doc() *apidoc.Query {
-	return quakesQueryD
-}
-
-type quakesQuery struct {
-	regionID, intensity, number string
-	quality                     []string
-}
-
-func (q *quakesQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 4:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "number", "regionID", "intensity", "quality"):
-		return false
-	case !numberRe.MatchString(r.URL.Query().Get("number")):
-		web.BadRequest(w, r, "Invalid query parameter number: "+r.URL.Query().Get("number"))
-		return false
-	case !intensityRe.MatchString(r.URL.Query().Get("intensity")):
-		web.BadRequest(w, r, "Invalid intensity: "+r.URL.Query().Get("intensity"))
-		return false
+func quakes(w http.ResponseWriter, r *http.Request) {
+	if err := quakesD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	q.number = r.URL.Query().Get("number")
-	q.regionID = r.URL.Query().Get("regionID")
-	q.intensity = r.URL.Query().Get("intensity")
-	q.quality = strings.Split(r.URL.Query().Get("quality"), ",")
+	v := r.URL.Query()
 
-	var d string
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", q.regionID).Scan(&d)
-	if err == sql.ErrNoRows {
-		web.BadRequest(w, r, "invalid quake regionID: "+q.regionID)
-		return false
-	}
-	if err != nil {
-		web.ServiceUnavailable(w, r, err)
-		return false
+	number := v.Get("number")
+	regionID := v.Get("regionID")
+	intensity := v.Get("intensity")
+	quality := strings.Split(v.Get("quality"), ",")
+
+	if !numberRe.MatchString(number) {
+		web.BadRequest(w, r, "Invalid query parameter number: "+number)
+		return
 	}
 
-	for _, q := range q.quality {
+	if !intensityRe.MatchString(intensity) {
+		web.BadRequest(w, r, "Invalid intensity: "+intensity)
+		return
+	}
+
+	for _, q := range quality {
 		if !qualityRe.MatchString(q) {
 			web.BadRequest(w, r, "Invalid quality: "+q)
-			return false
+			return
 		}
 	}
 
-	return true
-}
-
-func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
+	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", regionID).Scan(&d)
+	if err == sql.ErrNoRows {
+		web.BadRequest(w, r, "invalid quake regionID: "+regionID)
+		return
+	}
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
+		return
+	}
 
-	err := db.QueryRow(
+	err = db.QueryRow(
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
@@ -327,12 +291,12 @@ func (q *quakesQuery) Handle(w http.ResponseWriter, r *http.Request) {
                                 agency,
                                 locality,
                                 intensity,
-                                intensity_`+q.regionID+` as "regionIntensity",
+                                intensity_`+regionID+` as "regionIntensity",
                                 quality,
                                 to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
                          )) as properties FROM qrt.quakeinternal_v2 as q where maxmmi >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(q.quality, `','`)+`')  AND ST_Contains((select geom from qrt.region where regionname = $3), ST_Shift_Longitude(origin_geom)) limit $2 ) as f ) as fc`, q.intensity, q.number, q.regionID).Scan(&d)
+                         AND quality in ('`+strings.Join(quality, `','`)+`')  AND ST_Contains((select geom from qrt.region where regionname = $3), ST_Shift_Longitude(origin_geom)) limit $2 ) as f ) as fc`, intensity, number, regionID).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return

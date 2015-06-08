@@ -13,22 +13,22 @@ import (
 var impactDoc = apidoc.Endpoint{Title: "Impact",
 	Description: `Look up impact information`,
 	Queries: []*apidoc.Query{
-		new(intensityReportedQuery).Doc(),
-		new(intensityReportedLatestQuery).Doc(),
-		new(intensityMeasuredLatestQuery).Doc(),
+		intensityReportedD,
+		intensityReportedLatestD,
+		intensityMeasuredLatestD,
 	},
 }
 
 var zoomRe = regexp.MustCompile(`^(5|6)$`)
 
-var intensityMeasuredLatestQueryD = &apidoc.Query{
+var intensityMeasuredLatestD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Measured Intensity - Latest",
 	Description: "Retrieve measured intensity information in the last sixty minutes.",
 	Example:     "/intensity?type=measured",
 	ExampleHost: exHost,
 	URI:         "/intensity?type",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		"type": `<code>measured</code> is the only allowed value.`,
 	},
 	Props: map[string]template.HTML{
@@ -36,23 +36,17 @@ var intensityMeasuredLatestQueryD = &apidoc.Query{
 	},
 }
 
-type intensityMeasuredLatestQuery struct {
-}
-
-func (q *intensityMeasuredLatestQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 1:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case r.URL.Query().Get("type") != "measured":
-		web.BadRequest(w, r, "type must be measured.")
-		return false
+func intensityMeasuredLatest(w http.ResponseWriter, r *http.Request) {
+	if err := intensityMeasuredLatestD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	return true
-}
+	if r.URL.Query().Get("type") != "measured" {
+		web.BadRequest(w, r, "type must be measured.")
+		return
+	}
 
-func (q *intensityMeasuredLatestQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	var d string
 
 	err := db.QueryRow(
@@ -76,20 +70,17 @@ func (q *intensityMeasuredLatestQuery) Handle(w http.ResponseWriter, r *http.Req
 	web.Ok(w, r, &b)
 }
 
-func (q *intensityMeasuredLatestQuery) Doc() *apidoc.Query {
-	return intensityMeasuredLatestQueryD
-}
-
 // latest reported intensity
 
-var intensityReportedLatestQueryD = &apidoc.Query{
+var intensityReportedLatestD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Reported Intensity - Latest",
 	Description: "Retrieve reported intensity information in the last sixty minutes.",
 	Example:     "/intensity?type=reported&zoom=5",
 	ExampleHost: exHost,
 	URI:         "/intensity?type=reported&zoom=(int)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
+		"type": `<code>reported</code> is the only allowed value.`,
 		"zoom": `The zoom level to aggregate values at.  This controls the size of the area that values are aggregated at.  The point returned
 				will be the center of each area.  Allowed values are one of <code>5, 6</code>.`,
 	},
@@ -103,31 +94,24 @@ var intensityReportedLatestQueryD = &apidoc.Query{
 	},
 }
 
-type intensityReportedLatestQuery struct {
-	zoom string
-}
-
-func (q *intensityReportedLatestQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 2:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "type", "zoom"):
-		return false
-	case !zoomRe.MatchString(r.URL.Query().Get("zoom")):
-		web.BadRequest(w, r, "Invalid zoom")
-		return false
-	case r.URL.Query().Get("type") != "reported":
-		web.BadRequest(w, r, "Invalid type")
-		return false
+func intensityReportedLatest(w http.ResponseWriter, r *http.Request) {
+	if err := intensityReportedLatestD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	q.zoom = r.URL.Query().Get("zoom")
+	if r.URL.Query().Get("type") != "reported" {
+		web.BadRequest(w, r, "type must be reported.")
+		return
+	}
 
-	return true
-}
+	zoom := r.URL.Query().Get("zoom")
 
-func (q *intensityReportedLatestQuery) Handle(w http.ResponseWriter, r *http.Request) {
+	if !zoomRe.MatchString(r.URL.Query().Get("zoom")) {
+		web.BadRequest(w, r, "Invalid zoom")
+		return
+	}
+
 	var d string
 
 	err := db.QueryRow(
@@ -141,13 +125,13 @@ func (q *intensityReportedLatestQuery) Handle(w http.ResponseWriter, r *http.Req
 										min_mmi,
 										count
 										) as l )) 
-					as properties from (select st_pointfromgeohash(geohash` + q.zoom + `) as location, 
+					as properties from (select st_pointfromgeohash(geohash` + zoom + `) as location, 
 						min(mmi) as min_mmi, 
 						max(mmi) as max_mmi, 
 						count(mmi) as count 
 						FROM impact.intensity_reported  
 						WHERE time >= (now() - interval '60 minutes')
-						group by (geohash` + q.zoom + `)) as s
+						group by (geohash` + zoom + `)) as s
 					) As f )  as fc`).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
@@ -158,20 +142,17 @@ func (q *intensityReportedLatestQuery) Handle(w http.ResponseWriter, r *http.Req
 	web.Ok(w, r, &b)
 }
 
-func (q *intensityReportedLatestQuery) Doc() *apidoc.Query {
-	return intensityReportedLatestQueryD
-}
-
 // reported intensity
 
-var intensityReportedQueryD = &apidoc.Query{
+var intensityReportedD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Reported Intensity",
 	Description: "Retrieve reported intensity information in a 15 minute time window after an event.",
 	Example:     "/intensity?type=reported&zoom=5&publicID=2013p407387",
 	ExampleHost: exHost,
 	URI:         "/intensity?type=reported&zoom=(int)&publicID=(publicID)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
+		"type": `<code>reported</code> is the only allowed value.`,
 		"zoom": `The zoom level to aggregate values at.  This controls the size of the area that values are aggregated at.  The point returned
 						will be the center of each area.  Allowed values are one of <code>5, 6</code>.`,
 		"publicID": `a valid quake ID e.g., <code>2014p715167</code>`,
@@ -186,47 +167,40 @@ var intensityReportedQueryD = &apidoc.Query{
 	},
 }
 
-type intensityReportedQuery struct {
-	zoom       string
-	originTime time.Time
-}
-
-func (q *intensityReportedQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 3:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "type", "zoom", "publicID"):
-		return false
-	case !zoomRe.MatchString(r.URL.Query().Get("zoom")):
-		web.BadRequest(w, r, "Invalid zoom")
-		return false
-	case !publicIDRe.MatchString(r.URL.Query().Get("publicID")):
-		web.BadRequest(w, r, "Invalid publicID")
-		return false
-	case r.URL.Query().Get("type") != "reported":
-		web.BadRequest(w, r, "Invalid type")
-		return false
+func intensityReported(w http.ResponseWriter, r *http.Request) {
+	if err := intensityReportedD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	q.zoom = r.URL.Query().Get("zoom")
+	if r.URL.Query().Get("type") != "reported" {
+		web.BadRequest(w, r, "type must be reported.")
+		return
+	}
+
+	zoom := r.URL.Query().Get("zoom")
+
+	if !zoomRe.MatchString(r.URL.Query().Get("zoom")) {
+		web.BadRequest(w, r, "Invalid zoom")
+		return
+	}
 
 	// Check that the publicid exists in the DB.
 	// If it does we keep the origintime - we need it later on.
-	err := db.QueryRow("select origintime FROM qrt.quake_materialized where publicid = $1", r.URL.Query().Get("publicID")).Scan(&q.originTime)
+	publicID := r.URL.Query().Get("publicID")
+
+	originTime := time.Time{}
+
+	err := db.QueryRow("select origintime FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&originTime)
 	if err == sql.ErrNoRows {
-		web.NotFound(w, r, "invalid publicID: "+r.URL.Query().Get("publicID"))
-		return false
+		web.NotFound(w, r, "invalid publicID: "+publicID)
+		return
 	}
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
-		return false
+		return
 	}
 
-	return true
-}
-
-func (q *intensityReportedQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT row_to_json(fc)
 				FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
 					FROM (SELECT 'Feature' as type,
@@ -237,19 +211,19 @@ func (q *intensityReportedQuery) Handle(w http.ResponseWriter, r *http.Request) 
 							min_mmi,
 							count
 							) as l )) 
-							as properties from (select st_pointfromgeohash(geohash` + q.zoom + `) as location, 
+							as properties from (select st_pointfromgeohash(geohash` + zoom + `) as location, 
 							min(mmi) as min_mmi, 
 							max(mmi) as max_mmi, 
 							count(mmi) as count 
 							FROM impact.intensity_reported 
 							WHERE time >= $1
 							AND time <= $2
-							group by (geohash` + q.zoom + `)) as s
+							group by (geohash` + zoom + `)) as s
 			) As f )  as fc`
 
 	var d string
 
-	err := db.QueryRow(query, q.originTime.Add(time.Duration(-1*time.Minute)), q.originTime.Add(time.Duration(15*time.Minute))).Scan(&d)
+	err = db.QueryRow(query, originTime.Add(time.Duration(-1*time.Minute)), originTime.Add(time.Duration(15*time.Minute))).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -257,8 +231,4 @@ func (q *intensityReportedQuery) Handle(w http.ResponseWriter, r *http.Request) 
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
-}
-
-func (q *intensityReportedQuery) Doc() *apidoc.Query {
-	return intensityReportedQueryD
 }

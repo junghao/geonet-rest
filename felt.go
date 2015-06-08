@@ -18,18 +18,18 @@ var feltDoc = apidoc.Endpoint{
 	Title:       "Felt",
 	Description: `Look up Felt Report information.`,
 	Queries: []*apidoc.Query{
-		new(feltQuery).Doc(),
+		feltD,
 	},
 }
 
-var feltQueryD = &apidoc.Query{
+var feltD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
 	Title:       "Felt",
 	Description: "Look up Felt Report information about earthquakes",
 	Example:     "/felt/report?publicID=2013p407387",
 	ExampleHost: exHost,
 	URI:         "/felt/report?publicID=(publicID)",
-	Params: map[string]template.HTML{
+	Required: map[string]template.HTML{
 		"publicID": `a valid quake ID e.g., <code>2014p715167</code>`,
 	},
 	Props: map[string]template.HTML{
@@ -37,43 +37,27 @@ var feltQueryD = &apidoc.Query{
 	},
 }
 
-func (q *feltQuery) Doc() *apidoc.Query {
-	return feltQueryD
-}
-
-type feltQuery struct {
-	publicID string
-}
-
-func (q *feltQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
-	switch {
-	case len(r.URL.Query()) != 1:
-		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
-	case !web.ParamsExist(w, r, "publicID"):
-		return false
+func felt(w http.ResponseWriter, r *http.Request) {
+	if err := feltD.CheckParams(r.URL.Query()); err != nil {
+		web.BadRequest(w, r, err.Error())
+		return
 	}
 
-	q.publicID = r.URL.Query().Get("publicID")
+	publicID := r.URL.Query().Get("publicID")
 
 	var d string
 
-	// Check that the publicid exists in the DB.  This is needed as the geoJSON query will return empty
-	// JSON for an invalid publicID.
-	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", q.publicID).Scan(&d)
+	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
 	if err == sql.ErrNoRows {
-		web.NotFound(w, r, "invalid publicID: "+q.publicID)
-		return false
+		web.NotFound(w, r, "invalid publicID: "+publicID)
+		return
 	}
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
-		return false
+		return
 	}
-	return true
-}
 
-func (q *feltQuery) Handle(w http.ResponseWriter, r *http.Request) {
-	res, err := client.Get(feltURL + q.publicID + ".geojson")
+	res, err := client.Get(feltURL + publicID + ".geojson")
 	defer res.Body.Close()
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)

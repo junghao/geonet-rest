@@ -20,7 +20,7 @@ var newsDoc = apidoc.Endpoint{
 	Title:       "News",
 	Description: `GeoNet news stories.`,
 	Queries: []*apidoc.Query{
-		new(newsQuery).Doc(),
+		newsD,
 	},
 }
 
@@ -65,7 +65,7 @@ func unmarshalNews(b []byte) (f Feed, err error) {
 
 // /news/geonet
 
-var newsQueryD = &apidoc.Query{
+var newsD = &apidoc.Query{
 	Accept:      web.V1JSON,
 	Title:       "News",
 	Description: " Returns a simple JSON version of the GeoNet News RSS feed.",
@@ -83,22 +83,12 @@ var newsQueryD = &apidoc.Query{
 	},
 }
 
-func (q *newsQuery) Doc() *apidoc.Query {
-	return newsQueryD
-}
-
-type newsQuery struct{}
-
-func (q *newsQuery) Validate(w http.ResponseWriter, r *http.Request) bool {
+func news(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.Query()) != 0 {
 		web.BadRequest(w, r, "incorrect number of query parameters.")
-		return false
+		return
 	}
 
-	return true
-}
-
-func (q *newsQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	res, err := client.Get(newsURL)
 	defer res.Body.Close()
 	if err != nil {
@@ -125,6 +115,7 @@ func (q *newsQuery) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Surrogate-Control", web.MaxAge300)
+	w.Header().Set("Content-Type", web.V1JSON)
 
 	web.Ok(w, r, &j)
 }
