@@ -26,11 +26,11 @@ var alertLevelD = &apidoc.Query{
 		"none": `no query parameters required.`,
 	},
 	Props: map[string]template.HTML{
-		`id`:       `a unique identifier for the volcano.`,
-		`title`:    `the volcano title.`,
-		`level`:    `volcanic alert level`,
-		`activity`: `volcanic activity.`,
-		`hazards`:  `most likely hazards`,
+		`volcanoID`:    `a unique identifier for the volcano.`,
+		`volcanoTitle`: `the volcano title.`,
+		`level`:        `volcanic alert level.`,
+		`activity`:     `volcanic activity.`,
+		`hazards`:      `most likely hazards.`,
 	},
 }
 
@@ -49,8 +49,8 @@ func alertLevel(w http.ResponseWriter, r *http.Request) {
                          row_to_json((SELECT l FROM 
                          	(
                          		SELECT 
-                                id AS "id",
-                                title AS "title",
+                                id AS "volcanoID",
+                                title AS "volcanoTitle",
                                 alert_level as "level",
                                 activity,
                                 hazards 
