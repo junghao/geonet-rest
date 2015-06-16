@@ -89,26 +89,7 @@ func news(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := client.Get(newsURL)
-	defer res.Body.Close()
-	if err != nil {
-		web.ServiceUnavailable(w, r, err)
-		return
-	}
-
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		web.ServiceUnavailable(w, r, err)
-		return
-	}
-
-	e, err := unmarshalNews(b)
-	if err != nil {
-		web.ServiceUnavailable(w, r, err)
-		return
-	}
-
-	j, err := json.Marshal(e)
+	j, err := fetchRSS(newsURL)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -117,4 +98,26 @@ func news(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Surrogate-Control", web.MaxAge300)
 
 	web.Ok(w, r, &j)
+}
+
+func fetchRSS(url string) (b []byte, err error) {
+	res, err := client.Get(url)
+	defer res.Body.Close()
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+
+	rss, err := unmarshalNews(body)
+	if err != nil {
+		return
+	}
+
+	b, err = json.Marshal(rss)
+
+	return
 }

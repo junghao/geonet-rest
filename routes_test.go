@@ -70,6 +70,7 @@ func TestRoutes(t *testing.T) {
 	r.Add("/intensity?type=measured")
 	// r.Add("/intensity?type=reported&zoom=5")
 	// r.Add("/intensity?type=reported&zoom=5&publicID=2012p673624")
+	r.Add("/volcano/alertlevel")
 
 	r.Test(ts, t)
 
@@ -132,6 +133,7 @@ func TestRoutes(t *testing.T) {
 	r.Add("/intensity?type=measured")
 	// r.Add("/intensity?type=reported&zoom=5")
 	// r.Add("/intensity?type=reported&zoom=5&publicID=2012p673624")
+	r.Add("/volcano/alertlevel")
 
 	r.Test(ts, t)
 
@@ -156,7 +158,6 @@ func TestRoutes(t *testing.T) {
 	r.Add("/region/canterbury")
 	r.Add("/region/fiordland")
 	r.Add("/region/otagosouthland")
-	r.Add("/region/ruapehu")
 
 	r.Test(ts, t)
 
@@ -186,6 +187,7 @@ func TestRoutes(t *testing.T) {
 		TestAccept: false,
 	}
 	r.Add("/news/geonet")
+	r.Add("/volcano/alertbulletin")
 
 	r.Test(ts, t)
 
@@ -250,6 +252,7 @@ func TestGeoJSON(t *testing.T) {
 	r.Add("/intensity?type=measured")
 	// r.Add("/intensity?type=reported&zoom=5")
 	// r.Add("/intensity?type=reported&zoom=5&publicID=2012p673624")
+	r.Add("/volcano/alertlevel")
 
 	r.GeoJSON(ts, t)
 }
