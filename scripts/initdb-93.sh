@@ -47,6 +47,7 @@ psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-views
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/qrt-soh.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/impact-create.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/impact-functions.ddl
+psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/volcano.ddl
 psql --host=127.0.0.1 --quiet --username=$db_user hazard -f ${ddl_dir}/user-permissions.ddl
 #
 # Event test data.

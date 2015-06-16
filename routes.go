@@ -24,6 +24,7 @@ func init() {
 	docs.AddEndpoint("felt", &feltDoc)
 	docs.AddEndpoint("news", &newsDoc)
 	docs.AddEndpoint("impact", &impactDoc)
+	docs.AddEndpoint("volcano", &volcanoDoc)
 }
 
 var exHost = "http://localhost:" + config.WebServer.Port
@@ -66,6 +67,9 @@ func router(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/felt/report" && (accept == web.V1GeoJSON || latest):
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		felt(w, r)
+	case r.URL.Path == "/volcano/alertlevel" && (accept == web.V1GeoJSON || latest):
+		w.Header().Set("Content-Type", web.V1GeoJSON)
+		alertLevel(w, r)
 	case strings.HasPrefix(r.URL.Path, "/region/") && (accept == web.V1GeoJSON || latest):
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		region(w, r)
