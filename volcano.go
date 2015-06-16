@@ -11,8 +11,11 @@ var volcanoDoc = apidoc.Endpoint{Title: "Volcano",
 	Description: "Look up volcano information.  <b>Caution - under development, subject to change.</b>",
 	Queries: []*apidoc.Query{
 		alertLevelD,
+		alertBulletinD,
 	},
 }
+
+const alertBulletinURL = `http://info.geonet.org.nz/createrssfeed.action?types=blogpost&spaces=volc&title=GeoNet+Volcano+RSS+Feed&labelString=vab&excludedSpaceKeys%3D&sort=created&maxResults=10&timeSpan=500&showContent=true&publicFeed=true&confirm=Create+RSS+Feed`
 
 var alertLevelD = &apidoc.Query{
 	Accept:      web.V1GeoJSON,
@@ -23,7 +26,7 @@ var alertLevelD = &apidoc.Query{
 	ExampleHost: exHost,
 	URI:         "/volcano/alertlevel",
 	Required: map[string]template.HTML{
-		"none": `no query parameters required.`,
+		"none": `no query parameters are required.`,
 	},
 	Props: map[string]template.HTML{
 		`volcanoID`:    `a unique identifier for the volcano.`,
@@ -63,4 +66,39 @@ func alertLevel(w http.ResponseWriter, r *http.Request) {
 
 	b := []byte(d)
 	web.Ok(w, r, &b)
+}
+
+var alertBulletinD = &apidoc.Query{
+	Accept:      web.V1JSON,
+	Title:       "Volcanic Alert Bulletins",
+	Description: " Returns a simple JSON version of the GeoNet Volcanic Alert Bulletin RSS feed.",
+	Example:     "/volcano/alertbulletins",
+	ExampleHost: exHost,
+	URI:         "/volcano/alertbulletins",
+	Required: map[string]template.HTML{
+		"none": `no query parameters are required.`,
+	},
+	Props: map[string]template.HTML{
+		"mlink":     "a link to a mobile version of the bulletin.",
+		"link":      "a link to the bulletin.",
+		"published": "the date the bulletin was published",
+		"title":     "the title of the bulletin.",
+	},
+}
+
+func alertBulletin(w http.ResponseWriter, r *http.Request) {
+	if len(r.URL.Query()) != 0 {
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return
+	}
+
+	j, err := fetchRSS(alertBulletinURL)
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
+		return
+	}
+
+	w.Header().Set("Surrogate-Control", web.MaxAge300)
+
+	web.Ok(w, r, &j)
 }

@@ -79,6 +79,9 @@ func router(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/news/geonet" && (accept == web.V1JSON || latest):
 		w.Header().Set("Content-Type", web.V1JSON)
 		news(w, r)
+	case r.URL.Path == "/volcano/alertbulletin" && (accept == web.V1JSON || latest):
+		w.Header().Set("Content-Type", web.V1JSON)
+		alertBulletin(w, r)
 	case strings.HasPrefix(r.URL.Path, apidoc.Path):
 		docs.Serve(w, r)
 	case r.URL.Path == "/soh":
