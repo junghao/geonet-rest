@@ -1,7 +1,5 @@
 package main
 
-// copied from haz-db
-
 import (
 	"fmt"
 	"github.com/GeoNet/msg"
@@ -57,11 +55,16 @@ func saveQuake(q msg.Quake) error {
 		`Quality`:               q.Quality(),
 		`Deleted`:               q.Status() == `deleted`,
 		`BackupSite`:            q.Site == `backup`,
+		`MMI`:                   q.MMI(),
 	}
 
 	mmi := q.MMI()
 	qv[`MMI`] = mmi
 	qv[`Intensity`] = msg.MMIIntensity(mmi)
+
+	// don't use time.UnixNano() for modificationTimeMicro, the zero time overflows int64.
+	mtUnixMicro := q.ModificationTime.Unix()*1000000 + int64(q.ModificationTime.Nanosecond()/1000)
+	qv[`ModificationTimeUnixMicro`] = mtUnixMicro
 
 	// Add the region MMID and intensity for all regions in the DB.
 	for _, v := range regionIDs {
@@ -103,7 +106,7 @@ func saveQuake(q msg.Quake) error {
 		return err
 	}
 
-	_, err = txn.Exec(`DELETE FROM haz.quakehistory WHERE PublicID = $1 AND ModificationTime = $2`, q.PublicID, q.ModificationTime)
+	_, err = txn.Exec(`DELETE FROM haz.quakehistory WHERE PublicID = $1 AND ModificationTimeUnixMicro = $2`, q.PublicID, mtUnixMicro)
 	if err != nil {
 		txn.Rollback()
 		return err

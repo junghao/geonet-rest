@@ -8,7 +8,7 @@ import (
 )
 
 var volcanoDoc = apidoc.Endpoint{Title: "Volcano",
-	Description: "Look up volcano information.  <b>Caution - under development, subject to change.</b>",
+	Description: "Look up volcano information.",
 	Queries: []*apidoc.Query{
 		alertLevelD,
 		alertBulletinD,

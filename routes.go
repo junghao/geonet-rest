@@ -25,6 +25,7 @@ func init() {
 	docs.AddEndpoint("news", &newsDoc)
 	docs.AddEndpoint("impact", &impactDoc)
 	docs.AddEndpoint("volcano", &volcanoDoc)
+	docs.AddEndpoint("cap", &capDoc)
 }
 
 var exHost = "http://localhost:" + config.WebServer.Port
@@ -82,6 +83,12 @@ func router(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/news/geonet" && (accept == web.V1JSON || latest):
 		w.Header().Set("Content-Type", web.V1JSON)
 		news(w, r)
+	case strings.HasPrefix(r.URL.Path, "/cap/1.2/GPA1.0/quake"):
+		w.Header().Set("Content-Type", web.CAP)
+		capQuake(w, r)
+	case r.URL.Path == "/cap/1.2/GPA1.0/feed/atom1.0/quake":
+		w.Header().Set("Content-Type", web.Atom)
+		capQuakeFeed(w, r)
 	case strings.HasPrefix(r.URL.Path, apidoc.Path):
 		docs.Serve(w, r)
 	case r.URL.Path == "/soh":

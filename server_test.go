@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"time"
 )
 
 var ts *httptest.Server
@@ -32,6 +33,9 @@ func setup() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// stop the quake being deleted from haz.quakehistory and haz.quakeapi
+	q.Time = time.Now().UTC()
 
 	err = saveQuake(q)
 	if err != nil {

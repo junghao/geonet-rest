@@ -191,6 +191,32 @@ func TestRoutes(t *testing.T) {
 
 	r.Test(ts, t)
 
+	// CAP routes - not versioned by Accept
+	r = webtest.Route{
+		Content:    web.CAP,
+		Cache:      web.MaxAge10,
+		Surrogate:  web.MaxAge10,
+		Response:   http.StatusOK,
+		Vary:       "Accept",
+		TestAccept: false,
+	}
+	r.Add("/cap/1.2/GPA1.0/quake/2013p407387.1370036261549894")
+
+	r.Test(ts, t)
+
+	// Atom feed routes - not versioned by Accept
+	r = webtest.Route{
+		Content:    web.Atom,
+		Cache:      web.MaxAge10,
+		Surrogate:  web.MaxAge10,
+		Response:   http.StatusOK,
+		Vary:       "Accept",
+		TestAccept: false,
+	}
+	r.Add("/cap/1.2/GPA1.0/feed/atom1.0/quake")
+
+	r.Test(ts, t)
+
 	// GeoJSON routes that should bad request
 	r = webtest.Route{
 		Accept:     web.V1GeoJSON,
