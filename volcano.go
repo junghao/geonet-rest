@@ -11,6 +11,7 @@ var volcanoDoc = apidoc.Endpoint{Title: "Volcano",
 	Description: "Look up volcano information.  <b>Caution - under development, subject to change.</b>",
 	Queries: []*apidoc.Query{
 		alertLevelD,
+		alertLevelsD,
 		alertBulletinD,
 	},
 }
@@ -34,6 +35,22 @@ var alertLevelD = &apidoc.Query{
 		`level`:        `volcanic alert level.`,
 		`activity`:     `volcanic activity.`,
 		`hazards`:      `most likely hazards.`,
+	},
+}
+
+var alertLevelsD = &apidoc.Query{
+	Accept:      web.V1JSON,
+	Title:       "Volcanic Alert Levels",
+	Description: `All Volcanic Alert Levels.`,
+	Example:     "/volcano/alertlevels",
+	ExampleHost: exHost,
+	URI:         "/volcano/alertlevels",
+	Required: map[string]template.HTML{
+		"none": `no query parameters are required.`,
+	},
+	Props: map[string]template.HTML{
+		`level`:    `Alert level in number.`,
+		`activity`: `The volcano activity for that alert level.`,
 	},
 }
 
@@ -64,6 +81,26 @@ func alertLevel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	b := []byte(d)
+	web.Ok(w, r, &b)
+}
+
+//get all alert levels as json
+func alertLevels(w http.ResponseWriter, r *http.Request) {
+	if len(r.URL.Query()) != 0 {
+		web.BadRequest(w, r, "incorrect number of query parameters.")
+		return
+	}
+	var d string
+	err := db.QueryRow(`select row_to_json(fc)  from (
+           select array_to_json(array_agg(row_to_json(t))) as alert_levels
+           from (
+               SELECT alert_level as level, activity from qrt.volcanic_alert_level
+           )t) fc`).Scan(&d)
+	if err != nil {
+		web.ServiceUnavailable(w, r, err)
+		return
+	}
 	b := []byte(d)
 	web.Ok(w, r, &b)
 }

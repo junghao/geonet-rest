@@ -70,6 +70,9 @@ func router(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/volcano/alertlevel" && (accept == web.V1GeoJSON || latest):
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		alertLevel(w, r)
+	case r.URL.Path == "/volcano/alertlevels" && (accept == web.V1GeoJSON || latest):
+		w.Header().Set("Content-Type", web.V1JSON)
+		alertLevels(w, r)
 	case strings.HasPrefix(r.URL.Path, "/region/") && (accept == web.V1GeoJSON || latest):
 		w.Header().Set("Content-Type", web.V1GeoJSON)
 		region(w, r)
