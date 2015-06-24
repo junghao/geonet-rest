@@ -72,9 +72,9 @@ var alertBulletinD = &apidoc.Query{
 	Accept:      web.V1JSON,
 	Title:       "Volcanic Alert Bulletins",
 	Description: " Returns a simple JSON version of the GeoNet Volcanic Alert Bulletin RSS feed.",
-	Example:     "/volcano/alertbulletins",
+	Example:     "/volcano/alertbulletin",
 	ExampleHost: exHost,
-	URI:         "/volcano/alertbulletins",
+	URI:         "/volcano/alertbulletin",
 	Required: map[string]template.HTML{
 		"none": `no query parameters are required.`,
 	},
