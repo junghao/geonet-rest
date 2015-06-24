@@ -22,9 +22,9 @@ var alertLevelD = &apidoc.Query{
 	Title:       "Volcanic Alert Level",
 	Description: `Volcanic Alert Level information for all volcanoes.`,
 	Discussion:  `<p>Volcanic Alert Level information for all volcanoes.  Please refer to <a href="http://info.geonet.org.nz/x/PYAO">Volcanic Alert Levels</a> for additional information.</p>`,
-	Example:     "/volcano/alertlevel",
+	Example:     "/volcano/alert/level",
 	ExampleHost: exHost,
-	URI:         "/volcano/alertlevel",
+	URI:         "/volcano/alert/level",
 	Required: map[string]template.HTML{
 		"none": `no query parameters are required.`,
 	},
@@ -72,9 +72,9 @@ var alertBulletinD = &apidoc.Query{
 	Accept:      web.V1JSON,
 	Title:       "Volcanic Alert Bulletins",
 	Description: " Returns a simple JSON version of the GeoNet Volcanic Alert Bulletin RSS feed.",
-	Example:     "/volcano/alertbulletin",
+	Example:     "/volcano/alert/bulletin",
 	ExampleHost: exHost,
-	URI:         "/volcano/alertbulletin",
+	URI:         "/volcano/alert/bulletin",
 	Required: map[string]template.HTML{
 		"none": `no query parameters are required.`,
 	},
