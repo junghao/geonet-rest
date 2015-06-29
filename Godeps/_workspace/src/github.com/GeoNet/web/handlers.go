@@ -34,6 +34,12 @@ const (
 	HtmlContent = "text/html; charset=utf-8"
 )
 
+// These are for CAP format and Atom which is not versioned by Accept.
+const (
+	CAP  = "application/cap+xml"
+	Atom = "application/xml"
+)
+
 type Header struct {
 	Cache, Surrogate string // Set as the default in the response header - can override in handler funcs.
 	Vary             string // This is added to the response header (which may already Vary on gzip).

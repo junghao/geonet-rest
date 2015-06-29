@@ -99,17 +99,23 @@ func (d *Query) ExampleResponse() (e string) {
 		return
 	}
 
-	var dat map[string]interface{}
+	content := res.Header.Get("Content-Type")
 
-	if strings.Contains(d.Accept, "json") {
+	switch {
+	case strings.Contains(content, "json"):
+		var dat map[string]interface{}
+
 		if err := json.Unmarshal(b, &dat); err != nil {
-			return e
+			return
 		}
 
 		if d, err := json.MarshalIndent(dat, "   ", "  "); err == nil {
 			e = string(d)
 		}
-	} else if strings.Contains(d.Accept, "csv") {
+	case strings.Contains(content, "csv"):
+		e = string(b)
+	case strings.Contains(content, "xml"):
+		// no easy way to pretty print XML.
 		e = string(b)
 	}
 

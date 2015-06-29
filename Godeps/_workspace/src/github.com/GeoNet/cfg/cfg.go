@@ -28,6 +28,7 @@ type Config struct {
 	PagerDuty  *PagerDuty
 	SMTP       *SMTP
 	Twitter    *Twitter
+	UA         *UA
 }
 
 // DataBase for database config.  Elements with an env tag can be overidden via env var.  See Load.
@@ -109,7 +110,12 @@ type Twitter struct {
 	ConsumerSecret string  `doc:"The Twitter consumer secret." env:"${PREFIX}_TWITTER_CSECRET"`
 	OAuthToken     string  `doc:"The Twitter OAuth token." env:"${PREFIX}_TWITTER_OTOKEN"`
 	OAuthSecret    string  `doc:"The Twitter OAuth secret." env:"${PREFIX}_TWITTER_OSECRET"`
-	Threshold      float64 `doc:"The threshold to send to Twitter." env:"${PREFIX}_TWITTER_THRESHOLD"`
+	MinMagnitude   float64 `doc:"The minumum magnitude (quake) to send to Twitter." env:"${PREFIX}_TWITTER_THRESHOLD"`
+}
+
+type UA struct {
+	AppKey          string `doc:"The UrbanAirship App key." env:"${PREFIX}_UA_KEY"`
+	AppMasterSecret string `doc:"The UrbanAirship App Master Secret." env:"${PREFIX}_UA_MSECRET"`
 }
 
 func (c *Config) env() {
@@ -124,6 +130,8 @@ func (c *Config) env() {
 		env(c.Env.Prefix, c.SC3)
 		env(c.Env.Prefix, c.PagerDuty)
 		env(c.Env.Prefix, c.SMTP)
+		env(c.Env.Prefix, c.Twitter)
+		env(c.Env.Prefix, c.UA)
 	}
 }
 
@@ -297,6 +305,7 @@ func (c *Config) EnvDoc() (d []EnvDoc, err error) {
 		d = append(d, envDoc(c.Env.Prefix, c.PagerDuty)...)
 		d = append(d, envDoc(c.Env.Prefix, c.SMTP)...)
 		d = append(d, envDoc(c.Env.Prefix, c.Twitter)...)
+		d = append(d, envDoc(c.Env.Prefix, c.UA)...)
 	} else {
 		err = fmt.Errorf("Found nil Prefix in the config.  Don't know how to read env var.")
 	}
