@@ -55,7 +55,9 @@ API documentation is generated from doc{} structs in the code.  Run the applicat
 
 ### Database
 
-Uses the database from the ddl dir.  Use `./scripts/init-db.sh` to initialise the DB in a suitable postgres+postgis container.
+Use the database from the haz-db project.
+
+Use `./scripts/init-db.sh` to initialise impact test data.
 
 ### Properties
 
@@ -89,27 +91,4 @@ purged from CDN.
 
 ### Database
 
-Use this procedure to sync a new DB.  It is best done without other processes writing to the DB.  Should this occur then manually 
-run the triggers afterwards for any new rows. 
-
-Dump all the quake data from a DB using:
-
-```
-pg_dump -h 127.0.0.1 -a -U hazard_w -t qrt.event -t qrt.eventhistory -t qrt.quake_materialized -f dump hazard 
-```
-
-edit the dump file and add `public` to the search path:
-
-```
-SET search_path = qrt, public, pg_catalog;
-```
-
-Drop the triggers on qrt.event on the target DB (as geoneradmin) c.f., the ddl.
-
-Load the dump file:
-
-```
-psql ... -f dump
-```
-
-Reinstate the triggers.
+Use the haz-db-load tool in the haz-db project to sync a new DB.

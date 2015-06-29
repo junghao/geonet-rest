@@ -1,1 +1,0 @@
-UPDATE qrt.event SET origintime = origintime + (EXTRACT(YEAR from now())-EXTRACT(YEAR FROM origintime) || ' years')::interval where date_trunc('year',origintime) = (date_trunc('month', TIMESTAMP '2011-01-01 00:00:00'));
