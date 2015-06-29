@@ -58,7 +58,7 @@ func alertLevel(w http.ResponseWriter, r *http.Request) {
                                 activity,
                                 hazards 
                            ) as l
-                         )) as properties FROM (qrt.volcano JOIN qrt.volcanic_alert_level using (alert_level)) as v ) As f )  as fc`).Scan(&d)
+                         )) as properties FROM (haz.volcano JOIN haz.volcanic_alert_level using (alert_level)) as v ) As f )  as fc`).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return

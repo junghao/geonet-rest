@@ -65,7 +65,7 @@ func regions(w http.ResponseWriter, r *http.Request) {
                          		title,
                          		groupname as group
                            ) as l
-                         )) as properties FROM qrt.region as q where groupname in ('region', 'north', 'south')) as f ) as fc`).Scan(&d)
+                         )) as properties FROM haz.quakeregion as q where groupname in ('region', 'north', 'south')) as f ) as fc`).Scan(&d)
 
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
@@ -106,7 +106,7 @@ func region(w http.ResponseWriter, r *http.Request) {
 
 	var d string
 
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1", regionID).Scan(&d)
+	err := db.QueryRow("select regionname FROM haz.quakeregion where regionname = $1", regionID).Scan(&d)
 	if err == sql.ErrNoRows {
 		web.BadRequest(w, r, "invalid regionID: "+regionID)
 		return
@@ -127,7 +127,7 @@ func region(w http.ResponseWriter, r *http.Request) {
                          		title, 
                          		groupname as group
                            ) as l
-                         )) as properties FROM qrt.region as q where regionname = $1 ) as f ) as fc`, regionID).Scan(&d)
+                         )) as properties FROM haz.quakeregion as q where regionname = $1 ) as f ) as fc`, regionID).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return

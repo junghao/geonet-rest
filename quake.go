@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/GeoNet/msg"
 	"github.com/GeoNet/web"
 	"github.com/GeoNet/web/api/apidoc"
 	"html/template"
@@ -42,7 +43,7 @@ var propsD = map[string]template.HTML{
 	`locality`:         `distance and direction to the nearest locality.`,
 	`intensity`:        `the calculated <a href="http://info.geonet.org.nz/x/b4Ih">intensity</a> at the surface above the quake (epicenter) e.g., strong.`,
 	`regionIntensity`:  `the calculated intensity at the closest locality in the region for the request. `,
-	`quality`:          `the quality of this information; <code>best</code>, <code>good</code>, <code>caution</code>, <code>unknown</code>, <code>deleted</code>.`,
+	`quality`:          `the quality of this information; <code>best</code>, <code>good</code>, <code>caution</code>, <code>deleted</code>.`,
 	`modificationTime`: `the modification time of this information.`,
 }
 
@@ -79,7 +80,7 @@ func quake(w http.ResponseWriter, r *http.Request) {
 
 	// Check that the publicid exists in the DB.  This is needed as the handle method will return empty
 	// JSON for an invalid publicID.
-	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
+	err := db.QueryRow("select publicid FROM haz.quake where publicid = $1", publicID).Scan(&d)
 	if err == sql.ErrNoRows {
 		web.NotFound(w, r, "invalid publicID: "+publicID)
 		return
@@ -93,23 +94,23 @@ func quake(w http.ResponseWriter, r *http.Request) {
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, array_to_json(array_agg(f)) as features
                          FROM (SELECT 'Feature' as type,
-                         ST_AsGeoJSON(q.origin_geom)::json as geometry,
+                         ST_AsGeoJSON(q.geom)::json as geometry,
                          row_to_json((SELECT l FROM 
                          	(
                          		SELECT 
                          		publicid AS "publicID",
-                                to_char(origintime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
+                                to_char(time, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
                                 depth, 
                                 magnitude, 
                                 type, 
-                                agency, 
+                                agencyID as agency, 
                                 locality,
-                                qrt.mmi_to_intensity(maxmmi) as intensity,
-                                qrt.mmi_to_intensity(mmi_newzealand) as "regionIntensity",
-                                qrt.quake_quality(status, usedphasecount, magnitudestationcount) as quality,
-                                to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
+                                intensity,
+                                intensity_newzealand as "regionIntensity",
+                                quality,
+                                to_char(modificationTime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quake_materialized as q where publicid = $1 ) As f )  as fc`, publicID).Scan(&d)
+                         )) as properties FROM haz.quake as q where publicid = $1 ) As f )  as fc`, publicID).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -171,7 +172,7 @@ func quakesRegion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var d string
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", regionID).Scan(&d)
+	err := db.QueryRow("select regionname FROM haz.quakeregion where regionname = $1", regionID).Scan(&d)
 	if err == sql.ErrNoRows {
 		web.BadRequest(w, r, "invalid quake regionID: "+regionID)
 		return
@@ -185,24 +186,24 @@ func quakesRegion(w http.ResponseWriter, r *http.Request) {
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
-                         ST_AsGeoJSON(q.origin_geom)::json as geometry,
+                         ST_AsGeoJSON(q.geom)::json as geometry,
                          row_to_json((SELECT l FROM
                          	(
                          		SELECT
                          		publicid AS "publicID",
-                                to_char(origintime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
+                                to_char(time, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
                                 depth,
                                 magnitude,
                                 type,
-                                agency,
+                                agencyid as agency,
                                 locality,
                                 intensity,
                                 intensity_`+regionID+` as "regionIntensity",
                                 quality,
-                                to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
+                                to_char(modificationTime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quakeinternal_v2 as q where mmi_`+regionID+` >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(quality, `','`)+`') limit $2 ) as f ) as fc`, regionIntensity, number).Scan(&d)
+                         )) as properties FROM haz.quakeapi as q where mmid_`+regionID+` >= $1
+                         AND quality in ('`+strings.Join(quality, `','`)+`')  ORDER BY time DESC  limit $2 ) as f ) as fc`, msg.IntensityMMI(regionIntensity), number).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return
@@ -265,7 +266,7 @@ func quakes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var d string
-	err := db.QueryRow("select regionname FROM qrt.region where regionname = $1 AND groupname in ('region', 'north', 'south')", regionID).Scan(&d)
+	err := db.QueryRow("select regionname FROM haz.quakeregion where regionname = $1", regionID).Scan(&d)
 	if err == sql.ErrNoRows {
 		web.BadRequest(w, r, "invalid quake regionID: "+regionID)
 		return
@@ -279,24 +280,26 @@ func quakes(w http.ResponseWriter, r *http.Request) {
 		`SELECT row_to_json(fc)
                          FROM ( SELECT 'FeatureCollection' as type, COALESCE(array_to_json(array_agg(f)), '[]') as features
                          FROM (SELECT 'Feature' as type,
-                         ST_AsGeoJSON(q.origin_geom)::json as geometry,
+                         ST_AsGeoJSON(q.geom)::json as geometry,
                          row_to_json((SELECT l FROM
                          	(
                          		SELECT
                          		publicid AS "publicID",
-                                to_char(origintime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
+                                to_char(time, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "time",
                                 depth,
                                 magnitude,
                                 type,
-                                agency,
+                                agencyid as agency,
                                 locality,
                                 intensity,
                                 intensity_`+regionID+` as "regionIntensity",
                                 quality,
-                                to_char(updatetime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
+                                to_char(modificationTime, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "modificationTime"
                            ) as l
-                         )) as properties FROM qrt.quakeinternal_v2 as q where maxmmi >= qrt.intensity_to_mmi($1)
-                         AND quality in ('`+strings.Join(quality, `','`)+`')  AND ST_Contains((select geom from qrt.region where regionname = $3), ST_Shift_Longitude(origin_geom)) limit $2 ) as f ) as fc`, intensity, number, regionID).Scan(&d)
+                         )) as properties FROM haz.quakeapi as q where mmi >= $1
+                         AND quality in ('`+strings.Join(quality, `','`)+`')  AND in_`+regionID+` ORDER BY time DESC 
+                         limit $2 ) as f ) as fc`,
+		msg.IntensityMMI(intensity), number).Scan(&d)
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
 		return

@@ -40,7 +40,7 @@ func soh(w http.ResponseWriter, r *http.Request) {
 
 	b.Write([]byte(`<table><tr><th>Service</th><th>Time Received</th></tr>`))
 
-	rows, err := db.Query("select serverid, timereceived from qrt.soh")
+	rows, err := db.Query("select serverid, timereceived from haz.soh")
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {

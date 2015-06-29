@@ -47,7 +47,7 @@ func felt(w http.ResponseWriter, r *http.Request) {
 
 	var d string
 
-	err := db.QueryRow("select publicid FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&d)
+	err := db.QueryRow("select publicid FROM haz.quake where publicid = $1", publicID).Scan(&d)
 	if err == sql.ErrNoRows {
 		web.NotFound(w, r, "invalid publicID: "+publicID)
 		return

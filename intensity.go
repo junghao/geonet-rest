@@ -191,7 +191,7 @@ func intensityReported(w http.ResponseWriter, r *http.Request) {
 
 	originTime := time.Time{}
 
-	err := db.QueryRow("select origintime FROM qrt.quake_materialized where publicid = $1", publicID).Scan(&originTime)
+	err := db.QueryRow("select origintime FROM haz.quake where publicid = $1", publicID).Scan(&originTime)
 	if err == sql.ErrNoRows {
 		web.NotFound(w, r, "invalid publicID: "+publicID)
 		return
