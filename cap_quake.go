@@ -69,6 +69,8 @@ func capQuake(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
+	c.References = make([]string, 0)
+
 	for rows.Next() {
 		var i int
 		err := rows.Scan(&i)
@@ -76,7 +78,7 @@ func capQuake(w http.ResponseWriter, r *http.Request) {
 			web.ServiceUnavailable(w, r, err)
 			return
 		}
-		c.References = append(c.References, fmt.Sprintf("%s.%d"))
+		c.References = append(c.References, fmt.Sprintf("%s.%d", c.Quake.PublicID, i))
 	}
 	rows.Close()
 
