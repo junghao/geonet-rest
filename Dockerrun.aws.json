@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
     "Image": {
-      "Name": "quay.io/geonet/geonet-rest"
+      "Name": "quay.io/geonet/geonet-rest:wip-cap-v3"
       },
       "Ports": [
       {

@@ -61,7 +61,7 @@ func capQuake(w http.ResponseWriter, r *http.Request) {
 	c := capQuakeT{ID: id}
 	c.Quake.PublicID = p[0]
 
-	rows, err := db.Query(`select modificationTimeUnixMicro from haz.quakehistory
+	rows, err := db.Query(`select modificationTimeUnixMicro, modificationtime from haz.quakehistory
 		where publicid = $1 AND modificationTimeUnixMicro < $2 AND status in ('reviewed','deleted')`, p[0], p[1])
 	if err != nil {
 		web.ServiceUnavailable(w, r, err)
@@ -73,12 +73,13 @@ func capQuake(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var i int
-		err := rows.Scan(&i)
+		var t time.Time
+		err := rows.Scan(&i, &t)
 		if err != nil {
 			web.ServiceUnavailable(w, r, err)
 			return
 		}
-		c.References = append(c.References, fmt.Sprintf("%s.%d", c.Quake.PublicID, i))
+		c.References = append(c.References, fmt.Sprintf("%s.%d,%s", c.Quake.PublicID, i, t.In(nz).Format(time.RFC3339)))
 	}
 	rows.Close()
 
