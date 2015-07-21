@@ -29,6 +29,10 @@ After an earthquake, listen to your local radio stations as emergency management
     <valueName>Magnitude</valueName>
     <value>{{printf "%.1f" .Quake.Magnitude}}</value>
   </parameter>
+  <parameter>
+    <valueName>Intensity</valueName>
+    <value>{{.Intensity}}</value>
+  </parameter>
     <area>       
   <areaDesc>{{area .Localities}}</areaDesc>
   <circle>{{printf "%.2f" .Quake.Latitude}},{{printf "%.2f" .Quake.Longitude}} {{radius .Localities | printf "%.1f"}}</circle>
