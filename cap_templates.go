@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/GeoNet/msg"
 	"log"
+	"math"
 	"sort"
 	"strings"
 	"text/template"
@@ -95,13 +96,24 @@ var funcMap = template.FuncMap{
 		sort.Sort(msg.ByDistance(localities))
 
 		for _, l := range localities {
-			area = area + fmt.Sprintf("%s %s of %s, ", msg.Distance(l.Distance), compass(l.Bearing), l.Locality.Name)
+			if l.Distance < 5 {
+				area = area + fmt.Sprintf("Within 5 km of %s, ", l.Locality.Name)
+			} else {
+				area = area + fmt.Sprintf("%s %s of %s, ", msg.Distance(l.Distance), compass(l.Bearing), l.Locality.Name)
+			}
 		}
 
 		return strings.Trim(area, ", ")
 	},
 	"distance": msg.Distance,
-	"compass":  compass,
+	"location": func(d, b float64, name string) string {
+		if d < 5 {
+			return "Within 5 km of " + name
+		}
+
+		return fmt.Sprintf("%.f km %s of %s", math.Floor(d/5.0)*5, compass(b), name)
+	},
+	"compass": compass,
 	"severity": func(mmi float64) string {
 		switch {
 		case mmi >= 8:
